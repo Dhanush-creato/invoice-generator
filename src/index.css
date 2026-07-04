@@ -1,0 +1,665 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,700;1,400&display=swap');
+
+:root {
+  --bg-primary: #0a0f1d;
+  --bg-secondary: #0d1527;
+  --card-bg: rgba(18, 26, 47, 0.65);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --text-primary: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --accent-color: #3b82f6;
+  --accent-glow: rgba(59, 130, 246, 0.15);
+  --accent-hover: #2563eb;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --input-bg: rgba(10, 15, 29, 0.8);
+  --sidebar-width: 260px;
+  --shadow-main: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
+}
+
+.light-theme {
+  --bg-primary: #f5f7fb;
+  --bg-secondary: #ffffff;
+  --card-bg: rgba(255, 255, 255, 0.9);
+  --card-border: rgba(0, 0, 0, 0.08);
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --accent-color: #2563eb;
+  --accent-glow: rgba(37, 99, 235, 0.1);
+  --accent-hover: #1d4ed8;
+  --success-color: #059669;
+  --danger-color: #dc2626;
+  --border-color: rgba(0, 0, 0, 0.1);
+  --input-bg: #f8fafc;
+  --shadow-main: 0 8px 24px 0 rgba(148, 163, 184, 0.15);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Glassmorphism utility classes */
+.glass {
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--shadow-main);
+  border-radius: 16px;
+}
+
+/* Base Form Inputs */
+input, select, textarea {
+  width: 100%;
+  padding: 12px 16px;
+  background-color: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 15px;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;   /* prevents inputs from overflowing grid cells */
+  min-width: 0;             /* allows shrinking inside grid/flex on mobile */
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  outline: none;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+/* Scrollbar customizations */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Main Dashboard Structure */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex-grow: 1;
+  padding: 40px;
+  overflow-y: auto;
+  margin-left: var(--sidebar-width);
+  transition: margin-left 0.3s ease;
+}
+
+@media (max-width: 992px) {
+  .main-content {
+    margin-left: 0;
+    padding: 20px;
+  }
+}
+
+/* Quantity selector component adjustments */
+.qty-selector {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: var(--input-bg);
+  max-width: 140px;
+}
+
+.qty-btn {
+  background: transparent;
+  color: var(--text-primary);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  border: none;
+  outline: none;
+  transition: background-color 0.2s;
+}
+
+.qty-btn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.light-theme .qty-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.qty-input {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  width: 60px !important;
+  height: 36px;
+  text-align: center;
+  font-weight: 600;
+  padding: 0 4px !important;
+  -moz-appearance: textfield;
+}
+
+.qty-input::-webkit-outer-spin-button,
+.qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* ==========================================
+   PRINT STYLESHEET (PIXEL-PERFECT INVOICES)
+   ========================================== */
+@media print {
+  /* A4 page with no margins for full bleed printing */
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  /* Remove all browser-printed URL / page headers */
+  html {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    background-color: #fff !important;
+    color: #000 !important;
+    font-size: 10pt !important;
+    line-height: 1.3 !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+  }
+
+  /* Hide navigation, toolbars, buttons, forms, dashboards, etc. */
+  .no-print,
+  button,
+  .qty-btn,
+  .sidebar,
+  header,
+  .toolbar,
+  .form-container,
+  .theme-toggle,
+  .nav-tabs,
+  .edit-actions,
+  .dashboard-header,
+  .stats-grid {
+    display: none !important;
+  }
+
+  /* Remove margins and make invoice cover page */
+  .main-content {
+    margin-left: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    width: 100% !important;
+  }
+
+  .invoice-preview-container {
+    padding: 8mm 8mm 20mm 8mm !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #fff !important;
+    width: 100% !important;
+    margin: 0 !important;
+    position: relative !important;
+    min-height: 297mm !important;
+    height: 297mm !important;
+    box-sizing: border-box !important;
+  }
+
+  .invoice-preview-container.pre-printed-layout {
+    padding: 8mm 8mm 10mm 8mm !important;
+  }
+
+  /* High contrast styles for invoice template tables */
+  .invoice-box {
+    background-color: #fff !important;
+    color: #000 !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+  }
+
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
+  th, td {
+    border: 1px solid #000 !important;
+    color: #000 !important;
+    padding: 3px 6px !important;
+    font-size: 9pt !important;
+    background: transparent !important;
+  }
+
+  /* Force print-specific fonts and line spacing on references */
+  .icon-systems-invoice {
+    border: 2px solid #000 !important;
+    border-radius: 0 !important;
+  }
+  
+  .tax-invoice-deepam {
+    border: 2px solid #000 !important;
+    border-radius: 0 !important;
+  }
+
+  /* Ensure stamp and signature images remain visible */
+  img.invoice-logo,
+  img.invoice-signature {
+    filter: grayscale(100%) contrast(150%) !important;
+    max-height: 60px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Force elements that act as borders/boxes */
+  .bordered-box {
+    border: 1px solid #000 !important;
+    border-radius: 0 !important;
+  }
+
+  /* Prevent page breaks inside important sections */
+  .invoice-table-container,
+  .invoice-summary-section,
+  .invoice-bank-section,
+  .invoice-signatures {
+    page-break-inside: avoid !important;
+  }
+
+  /* Show blue background for footer wave in print */
+  [style*="backgroundColor: '#0083c2'"],
+  [style*="background-color: #0083c2"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Full bleed footer print styling: extends color to A4 paper boundaries */
+  .social-footer {
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    padding-bottom: 12mm !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Pre-printed sheet layout print styles */
+  .pre-printed-header-spacer,
+  .pre-printed-footer-spacer {
+    border: none !important;
+    background-color: transparent !important;
+    background: transparent !important;
+  }
+  .pre-printed-header-spacer span,
+  .pre-printed-footer-spacer span {
+    display: none !important;
+  }
+}
+
+/* Responsive Builder & Preview Layout Rules */
+.invoice-builder-layout {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.invoice-preview-panel {
+  position: sticky;
+  top: 24px;
+  height: calc(100vh - 48px);
+  overflow-y: auto;
+}
+
+@media (max-width: 992px) {
+  .invoice-builder-layout {
+    grid-template-columns: 1fr !important;
+  }
+  /* Hide live preview panel on mobile/tablet (toggled via View PDF Modal instead) */
+  .invoice-preview-panel {
+    display: none !important;
+  }
+  .mobile-preview-trigger {
+    display: flex !important;
+  }
+  .mobile-bottom-bar {
+    display: flex !important;
+  }
+}
+
+/* ─────────────────────────────────────
+   Mobile Sidebar Toggle
+───────────────────────────────────── */
+@media (max-width: 992px) {
+  /* Hide the desktop sidebar off-screen by default */
+  .sidebar-panel {
+    transform: translateX(-100%);
+  }
+
+  /* Slide in when open */
+  .sidebar-panel.sidebar-open {
+    transform: translateX(0);
+  }
+
+  /* Show hamburger button on mobile (when sidebar is closed) */
+  .sidebar-hamburger {
+    display: flex !important;
+  }
+
+  /* Hide hamburger when sidebar is open — added class via React state */
+  .sidebar-hamburger--hidden {
+    display: none !important;
+  }
+
+  /* Show close (X) button inside sidebar on mobile */
+  .sidebar-close-btn {
+    display: flex !important;
+  }
+
+  /* Shift main content to fill full width (no sidebar margin) */
+  .main-content {
+    margin-left: 0 !important;
+  }
+}
+
+/* Desktop: sidebar always visible, no hamburger */
+@media (min-width: 993px) {
+  .sidebar-panel {
+    transform: translateX(0) !important;
+  }
+  .sidebar-hamburger {
+    display: none !important;
+  }
+  .sidebar-close-btn {
+    display: none !important;
+  }
+}
+
+/* ─────────────────────────────────────
+   Editor Page Responsive Styles
+───────────────────────────────────── */
+
+/* Toolbar: title + save button side-by-side, wraps on very small screens */
+.editor-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.editor-title {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Form panel padding */
+.editor-form-panel {
+  padding: 32px;
+}
+
+/* 2-column form grids (Invoice No/Date, GSTIN/State, Tax rates…) */
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Product item row: HSN | Unit | Qty | Rate | Amount */
+.item-row-grid {
+  display: grid;
+  grid-template-columns: 110px 90px 125px 1fr 1.2fr;
+  gap: 10px;
+  align-items: end;
+}
+
+/* ── Mobile overrides ≤ 600px ── */
+@media (max-width: 600px) {
+  .editor-main {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    gap: 16px !important;
+  }
+
+  .editor-form-panel {
+    padding: 16px !important;
+  }
+
+  .editor-title {
+    font-size: 18px !important;
+  }
+
+  /* Stack 2-col form grids to 1 column */
+  .form-grid-2 {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Optimize template selection row on mobile: horizontal scroll pills */
+  .template-selector-grid {
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    gap: 8px !important;
+    padding-bottom: 8px !important;
+    scrollbar-width: none;
+  }
+  .template-selector-grid::-webkit-scrollbar {
+    display: none;
+  }
+  .template-selector-grid button {
+    flex: 0 0 auto !important;
+    padding: 8px 12px !important;
+    font-size: 11px !important;
+    border-radius: 8px !important;
+    white-space: nowrap !important;
+  }
+
+  /* Optimize product item card fields to fit mobile view perfectly */
+  .item-row-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px 10px !important;
+  }
+  
+  /* HSN and UNIT stay side-by-side on Row 1 */
+  .item-row-grid > div:nth-child(1),
+  .item-row-grid > div:nth-child(2) {
+    grid-column: span 1 !important;
+  }
+
+  /* Quantity spans full-width on Row 2 for easy click +/- buttons */
+  .item-row-grid > div:nth-child(3) {
+    grid-column: 1 / -1 !important;
+  }
+
+  /* Rate and Amount stay side-by-side on Row 3 */
+  .item-row-grid > div:nth-child(4),
+  .item-row-grid > div:nth-child(5) {
+    grid-column: span 1 !important;
+  }
+}
+
+/* ── Tablet overrides 601–900px ── */
+@media (min-width: 601px) and (max-width: 900px) {
+  .editor-form-panel {
+    padding: 20px !important;
+  }
+
+  .item-row-grid {
+    grid-template-columns: 1fr 1fr 1fr !important;
+  }
+
+  .item-row-grid > div:nth-child(4),
+  .item-row-grid > div:nth-child(5) {
+    grid-column: span 1;
+  }
+}
+
+/* ─────────────────────────────────────
+   Item Card: prevent overflow on all screens
+───────────────────────────────────── */
+.item-card {
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.item-card input,
+.item-card textarea,
+.item-card select {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;       /* allows flex/grid children to shrink below content size */
+}
+
+/* On mobile, description textarea should be full width and not overflow */
+@media (max-width: 600px) {
+  .item-card {
+    padding: 12px !important;
+  }
+
+  /* Predefined item select: full width on mobile */
+  .item-card select {
+    max-width: 100% !important;
+    width: 100% !important;
+    font-size: 12px !important;
+  }
+
+  /* The qty +/- row: constrain width */
+  .item-card .qty-selector-row {
+    width: 100%;
+  }
+}
+
+/* ─────────────────────────────────────
+   Items Inventory Page
+───────────────────────────────────── */
+
+/* Scroll wrapper — enables horizontal scroll on small screens */
+.items-scroll-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Mobile card list — hidden on desktop */
+.items-card-list {
+  display: none;
+}
+
+/* Desktop: show table, hide cards */
+@media (min-width: 601px) {
+  .items-scroll-wrapper {
+    display: block;
+  }
+  .items-card-list {
+    display: none;
+  }
+}
+
+/* Mobile ≤ 600px: hide table, show cards */
+@media (max-width: 600px) {
+  .items-scroll-wrapper {
+    display: none;
+  }
+  .items-card-list {
+    display: block;
+  }
+
+  /* Add item form padding on mobile */
+}
+
+/* Template selection button display styles */
+.template-btn-short {
+  display: none !important;
+}
+.template-btn-full {
+  display: inline !important;
+}
+
+@media (max-width: 600px) {
+  .template-btn-short {
+    display: inline !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+  }
+  .template-btn-full {
+    display: none !important;
+  }
+  
+  /* Make selection pills round and inline on mobile */
+  .template-selector-grid {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 12px !important;
+    overflow: visible !important;
+    padding-bottom: 0 !important;
+  }
+  
+  .template-selector-grid button {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important; /* Circular buttons */
+    border-width: 2px !important;
+    box-sizing: border-box !important;
+  }
+}
+
+
+
+
