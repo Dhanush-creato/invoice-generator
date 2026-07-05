@@ -300,32 +300,24 @@ export default function Template2({ invoiceData, orgData }) {
 
             {/* Subtotal tax additions rendered in standard Deepam electronics layout */}
             {!is_interstate ? (
-              <>
-                <tr style={{ height: '22px' }}>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>CGST</td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                  <td style={{ padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>{cgstAmount.toFixed(2)}</td>
-                </tr>
-                <tr style={{ height: '22px' }}>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>SGST</td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                  <td style={{ padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>{sgstAmount.toFixed(2)}</td>
-                </tr>
-              </>
+              <tr style={{ height: '22px' }}>
+                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>
+                  GST ({parseFloat(cgst_percent) + parseFloat(sgst_percent)}%)
+                </td>
+                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                <td style={{ padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>{(cgstAmount + sgstAmount).toFixed(2)}</td>
+              </tr>
             ) : (
               <tr style={{ height: '22px' }}>
                 <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>IGST</td>
+                <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>
+                  IGST ({parseFloat(igst_percent)}%)
+                </td>
                 <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
                 <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
                 <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
@@ -363,10 +355,8 @@ export default function Template2({ invoiceData, orgData }) {
               <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px' }}>Taxable Value</th>
               {!is_interstate ? (
                 <>
-                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px' }}>CGST Rate</th>
-                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px' }}>CGST Amount</th>
-                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px' }}>SGST Rate</th>
-                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px' }}>SGST Amount</th>
+                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px' }}>GST Rate</th>
+                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px' }}>GST Amount</th>
                 </>
               ) : (
                 <>
@@ -398,10 +388,8 @@ export default function Template2({ invoiceData, orgData }) {
                   <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>{val.toFixed(2)}</td>
                   {!is_interstate ? (
                     <>
-                      <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>{cRate}%</td>
-                      <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>{cAmt.toFixed(2)}</td>
-                      <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>{sRate}%</td>
-                      <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>{sAmt.toFixed(2)}</td>
+                      <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>{(cRate + sRate)}%</td>
+                      <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>{(cAmt + sAmt).toFixed(2)}</td>
                     </>
                   ) : (
                     <>
@@ -420,9 +408,7 @@ export default function Template2({ invoiceData, orgData }) {
               {!is_interstate ? (
                 <>
                   <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right' }}>{cgstAmount.toFixed(2)}</td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right' }}>{sgstAmount.toFixed(2)}</td>
+                  <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right' }}>{(cgstAmount + sgstAmount).toFixed(2)}</td>
                 </>
               ) : (
                 <>
