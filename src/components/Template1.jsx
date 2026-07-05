@@ -388,7 +388,7 @@ export default function Template1({ invoiceData, orgData }) {
           <path d="M0,10 C30,0 70,0 100,10 Z" />
         </svg>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 2, position: 'relative', flexWrap: 'wrap', gap: '10px' }}>
-          <div style={{ fontWeight: '800', fontSize: '9px', letterSpacing: '0.2px' }}>{org.address}</div>
+          <div style={{ fontWeight: '800', fontSize: '9px', letterSpacing: '0.2px' }}>{org.address ? org.address.replace(/!/g, ', ') : ''}</div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             
             {/* Facebook Pill */}

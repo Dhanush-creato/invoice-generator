@@ -134,7 +134,12 @@ export default function Template2({ invoiceData, orgData }) {
             {/* Seller */}
             <div style={{ padding: '8px', borderBottom: '1px solid #000', minHeight: '90px' }}>
               <div style={{ fontWeight: 'bold', fontSize: '12px' }}>{org.name}</div>
-              <div>{org.address}</div>
+              <div style={{ lineHeight: '1.3', fontSize: '10px' }}>
+                {org.address ? org.address.split(/[!\n]/).map((line, lIdx) => {
+                  const trimmed = line.trim();
+                  return trimmed ? <div key={lIdx}>{trimmed}</div> : null;
+                }) : null}
+              </div>
               {org.phone && <div>PH NO-{org.phone}</div>}
               <div><span style={{ fontWeight: 'bold' }}>GSTIN/UIN:</span> <span style={{ textTransform: 'uppercase' }}>{org.gstin}</span></div>
               <div><span style={{ fontWeight: 'bold' }}>State Name:</span> Karnataka, Code : {org.state_code}</div>

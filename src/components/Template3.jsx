@@ -180,8 +180,19 @@ export default function Template3({ invoiceData, orgData }) {
               <div><span style={{ fontWeight: 'bold' }}>Invoice No:</span> {invoice_number}</div>
               <div><span style={{ fontWeight: 'bold' }}>Date :</span> {formatDate(date)}</div>
               <div style={{ fontWeight: 'bold', marginTop: '5px', fontSize: '11px', color: '#000' }}>M/s {org.name || "ICON SYSTEMS"}</div>
-              <div style={{ whiteSpace: 'pre-wrap', fontSize: '10px', lineHeight: '1.3', color: '#333' }}>
-                {org.address || "#507, 10th Cross, Sanjeevini nagar\nNagarbhavi main road\nBengaluru-560072"}
+              <div style={{ fontSize: '10px', lineHeight: '1.3', color: '#333' }}>
+                {org.address 
+                  ? org.address.split(/[!\n]/).map((line, lIdx) => {
+                      const trimmed = line.trim();
+                      return trimmed ? <div key={lIdx}>{trimmed}</div> : null;
+                    })
+                  : (
+                    <>
+                      <div>#507, 10th Cross, Sanjeevini nagar</div>
+                      <div>Nagarbhavi main road</div>
+                      <div>Bengaluru-560072</div>
+                    </>
+                  )}
               </div>
               <div style={{ fontWeight: 'bold', fontSize: '10px', marginTop: '3px' }}>
                 GSTN: <span style={{ textTransform: 'uppercase' }}>{org.gstin || "29ANUPR9033R1ZL"}</span>
