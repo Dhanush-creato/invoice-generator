@@ -104,7 +104,9 @@ export default function Template2({ invoiceData, orgData }) {
   }
 
   const totalTax = cgstAmount + sgstAmount + igstAmount;
-  const grandTotal = taxableAmount + totalTax;
+  const rawGrandTotal = taxableAmount + totalTax;
+  const grandTotal = Math.round(rawGrandTotal);
+  const roundOff = parseFloat((grandTotal - rawGrandTotal).toFixed(2));
 
   const totalQty = items.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0);
 
@@ -263,10 +265,10 @@ export default function Template2({ invoiceData, orgData }) {
               <th style={{ width: '4%', borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'center' }}>Sl No.</th>
               <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'left' }}>Description of Goods</th>
               <th style={{ width: '10%', borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'center' }}>HSN/SAC</th>
+              <th style={{ width: '8%', borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'center' }}>GST Rate</th>
               <th style={{ width: '12%', borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>Quantity</th>
               <th style={{ width: '10%', borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>Rate</th>
               <th style={{ width: '8%', borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'center' }}>per</th>
-              <th style={{ width: '8%', borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>Disc. %</th>
               <th style={{ width: '12%', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>Amount</th>
             </tr>
           </thead>
@@ -276,10 +278,14 @@ export default function Template2({ invoiceData, orgData }) {
                 <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'center', verticalAlign: 'top' }}>{idx + 1}</td>
                 <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'left', verticalAlign: 'top', fontWeight: 'bold' }}>{item.description}</td>
                 <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'center', verticalAlign: 'top' }}>{item.hsn_code}</td>
+                <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'center', verticalAlign: 'top' }}>
+                  {is_interstate 
+                    ? `${parseFloat(igst_percent)} %` 
+                    : `${parseFloat(cgst_percent) + parseFloat(sgst_percent)} %`}
+                </td>
                 <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', verticalAlign: 'top', fontWeight: 'bold' }}>{item.quantity} {item.unit || 'nos'}</td>
                 <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', verticalAlign: 'top' }}>{parseFloat(item.rate || 0).toFixed(2)}</td>
                 <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'center', verticalAlign: 'top' }}>{item.unit || 'nos.'}</td>
-                <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', verticalAlign: 'top' }}>-</td>
                 <td style={{ padding: '4px', textAlign: 'right', verticalAlign: 'top', fontWeight: 'bold' }}>{parseFloat(item.amount || 0).toFixed(2)}</td>
               </tr>
             ))}
@@ -300,24 +306,32 @@ export default function Template2({ invoiceData, orgData }) {
 
             {/* Subtotal tax additions rendered in standard Deepam electronics layout */}
             {!is_interstate ? (
-              <tr style={{ height: '22px' }}>
-                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>
-                  GST ({parseFloat(cgst_percent) + parseFloat(sgst_percent)}%)
-                </td>
-                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                <td style={{ padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>{(cgstAmount + sgstAmount).toFixed(2)}</td>
-              </tr>
+              <>
+                <tr style={{ height: '22px' }}>
+                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                  <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>CGST</td>
+                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                  <td style={{ padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>{cgstAmount.toFixed(2)}</td>
+                </tr>
+                <tr style={{ height: '22px' }}>
+                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                  <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>SGST</td>
+                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                  <td style={{ padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>{sgstAmount.toFixed(2)}</td>
+                </tr>
+              </>
             ) : (
               <tr style={{ height: '22px' }}>
                 <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>
-                  IGST ({parseFloat(igst_percent)}%)
-                </td>
+                <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>IGST</td>
                 <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
                 <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
                 <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
@@ -327,13 +341,26 @@ export default function Template2({ invoiceData, orgData }) {
               </tr>
             )}
 
+            {roundOff !== 0 && (
+              <tr style={{ height: '22px' }}>
+                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>ROUND OFF - SALES</td>
+                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                <td style={{ padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>{roundOff.toFixed(2)}</td>
+              </tr>
+            )}
+
             {/* Total Row */}
             <tr style={{ height: '24px', borderTop: '1px solid #000', borderBottom: '1px solid #000', background: '#fafafa', fontWeight: 'bold' }}>
               <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
               <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'left' }}>Total</td>
               <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-              <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right' }}>{totalQty} nos.</td>
               <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+              <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right' }}>{totalQty.toFixed(2)} {items[0]?.unit || 'nos'}</td>
               <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
               <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
               <td style={{ padding: '4px', textAlign: 'right' }}>₹{grandTotal.toFixed(2)}</td>
@@ -351,20 +378,32 @@ export default function Template2({ invoiceData, orgData }) {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', borderBottom: '1px solid #000', textAlign: 'center' }}>
           <thead>
             <tr style={{ background: '#eee', fontWeight: 'bold' }}>
-              <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px' }}>HSN/SAC</th>
-              <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px' }}>Taxable Value</th>
+              <th rowSpan={2} style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px' }}>HSN/SAC</th>
+              <th rowSpan={2} style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px' }}>Taxable Value</th>
               {!is_interstate ? (
                 <>
-                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px' }}>GST Rate</th>
-                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px' }}>GST Amount</th>
+                  <th colSpan={2} style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>Central Tax</th>
+                  <th colSpan={2} style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>State Tax</th>
+                </>
+              ) : (
+                <th colSpan={2} style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>Integrated Tax</th>
+              )}
+              <th rowSpan={2} style={{ borderBottom: '1px solid #000', padding: '6px 4px' }}>Total Tax Amount</th>
+            </tr>
+            <tr style={{ background: '#eee', fontWeight: 'bold' }}>
+              {!is_interstate ? (
+                <>
+                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>Rate</th>
+                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>Amount</th>
+                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>Rate</th>
+                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>Amount</th>
                 </>
               ) : (
                 <>
-                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px' }}>IGST Rate</th>
-                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px' }}>IGST Amount</th>
+                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>Rate</th>
+                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>Amount</th>
                 </>
               )}
-              <th style={{ borderBottom: '1px solid #000', padding: '6px 4px' }}>Total Tax Amount</th>
             </tr>
           </thead>
           <tbody>
@@ -388,8 +427,10 @@ export default function Template2({ invoiceData, orgData }) {
                   <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>{val.toFixed(2)}</td>
                   {!is_interstate ? (
                     <>
-                      <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>{(cRate + sRate)}%</td>
-                      <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>{(cAmt + sAmt).toFixed(2)}</td>
+                      <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>{cRate}%</td>
+                      <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>{cAmt.toFixed(2)}</td>
+                      <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>{sRate}%</td>
+                      <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>{sAmt.toFixed(2)}</td>
                     </>
                   ) : (
                     <>
@@ -401,14 +442,15 @@ export default function Template2({ invoiceData, orgData }) {
                 </tr>
               );
             })}
-            {/* HSN Totals Row */}
             <tr style={{ height: '24px', fontWeight: 'bold', background: '#fafafa' }}>
               <td style={{ borderRight: '1px solid #000', padding: '4px' }}>Total</td>
               <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right' }}>{taxableAmount.toFixed(2)}</td>
               {!is_interstate ? (
                 <>
                   <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right' }}>{(cgstAmount + sgstAmount).toFixed(2)}</td>
+                  <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right' }}>{cgstAmount.toFixed(2)}</td>
+                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                  <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right' }}>{sgstAmount.toFixed(2)}</td>
                 </>
               ) : (
                 <>
