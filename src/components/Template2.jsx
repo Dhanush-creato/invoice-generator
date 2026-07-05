@@ -16,6 +16,12 @@ export default function Template2({ invoiceData, orgData }) {
     customer_gstin = "29ANUPR9033R1ZL",
     customer_state = "Karnataka",
     customer_state_code = "29",
+    need_shipping = false,
+    shipping_name = "",
+    shipping_address = "",
+    shipping_gstin = "",
+    shipping_state = "",
+    shipping_state_code = "",
     items = [],
     cgst_percent = 9,
     sgst_percent = 9,
@@ -117,26 +123,7 @@ export default function Template2({ invoiceData, orgData }) {
         {/* Top Header Label */}
         <div style={{ display: 'flex', borderBottom: '1px solid #000', fontSize: '11px', fontWeight: 'bold' }}>
           <div style={{ flex: 1, padding: '4px 8px' }}>Tax Invoice</div>
-          <div style={{ flex: 1, padding: '4px 8px', textAlign: 'center' }}>(ORIGINAL FOR RECIPIENT)</div>
-          <div style={{ flex: 1, padding: '4px 8px', textAlign: 'right' }}>e-Invoice</div>
-        </div>
-
-        {/* IRN, Ack No and e-Invoice QR Code section */}
-        <div style={{ display: 'flex', borderBottom: '1px solid #000', padding: '8px' }}>
-          <div style={{ flex: 1.5, display: 'flex', flexDirection: 'column', gap: '4px', wordBreak: 'break-all' }}>
-            <div><span style={{ fontWeight: 'bold' }}>IRN :</span> {irn || "N/A"}</div>
-            <div><span style={{ fontWeight: 'bold' }}>Ack No. :</span> {ack_no || "N/A"}</div>
-            <div><span style={{ fontWeight: 'bold' }}>Ack Date :</span> {ack_date ? formatDate(ack_date) : "N/A"}</div>
-          </div>
-          <div style={{ flex: 0.5, display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-            {qrCodeUrl ? (
-              <div style={{ textAlign: 'center' }}>
-                <img src={qrCodeUrl} alt="e-Invoice QR" style={{ width: '85px', height: '85px' }} />
-              </div>
-            ) : (
-              <div style={{ width: '80px', height: '80px', border: '1px dashed #000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px' }}>QR Code</div>
-            )}
-          </div>
+          <div style={{ flex: 1, padding: '4px 8px', textAlign: 'right' }}>(ORIGINAL FOR RECIPIENT)</div>
         </div>
 
         {/* Company Info / Billing Details */}
@@ -154,21 +141,23 @@ export default function Template2({ invoiceData, orgData }) {
             </div>
 
             {/* Consignee (Ship to) */}
-            <div style={{ padding: '8px', borderBottom: '1px solid #000', minHeight: '90px' }}>
-              <span style={{ fontWeight: 'bold', fontSize: '10px', textDecoration: 'underline' }}>Consignee (Ship to)</span>
-              <div style={{ fontWeight: 'bold', margin: '2px 0' }}>{customer_name}</div>
-              <div style={{ lineHeight: '1.3', fontSize: '10px' }}>
-                {customer_address ? customer_address.split(/[!\n]/).map((line, lIdx) => {
-                  const trimmed = line.trim();
-                  return trimmed ? <div key={lIdx}>{trimmed}</div> : null;
-                }) : null}
+            {need_shipping && (
+              <div style={{ padding: '8px', borderBottom: '1px solid #000', flexGrow: 1 }}>
+                <span style={{ fontWeight: 'bold', fontSize: '10px', textDecoration: 'underline' }}>Consignee (Ship to)</span>
+                <div style={{ fontWeight: 'bold', margin: '2px 0' }}>{shipping_name || customer_name}</div>
+                <div style={{ lineHeight: '1.3', fontSize: '10px' }}>
+                  {(shipping_address || customer_address) ? (shipping_address || customer_address).split(/[!\n]/).map((line, lIdx) => {
+                    const trimmed = line.trim();
+                    return trimmed ? <div key={lIdx}>{trimmed}</div> : null;
+                  }) : null}
+                </div>
+                <div><span style={{ fontWeight: 'bold' }}>GSTIN/UIN:</span> <span style={{ textTransform: 'uppercase' }}>{shipping_gstin || customer_gstin}</span></div>
+                <div><span style={{ fontWeight: 'bold' }}>State Name:</span> {shipping_state || customer_state}, Code : {shipping_state_code || customer_state_code}</div>
               </div>
-              <div><span style={{ fontWeight: 'bold' }}>GSTIN/UIN:</span> <span style={{ textTransform: 'uppercase' }}>{customer_gstin}</span></div>
-              <div><span style={{ fontWeight: 'bold' }}>State Name:</span> {customer_state}, Code : {customer_state_code}</div>
-            </div>
+            )}
 
             {/* Buyer (Bill to) */}
-            <div style={{ padding: '8px', minHeight: '90px' }}>
+            <div style={{ padding: '8px', flexGrow: 1 }}>
               <span style={{ fontWeight: 'bold', fontSize: '10px', textDecoration: 'underline' }}>Buyer (Bill to)</span>
               <div style={{ fontWeight: 'bold', margin: '2px 0' }}>{customer_name}</div>
               <div style={{ lineHeight: '1.3', fontSize: '10px' }}>

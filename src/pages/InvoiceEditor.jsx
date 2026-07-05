@@ -46,6 +46,12 @@ export default function InvoiceEditor() {
   const [modalScale, setModalScale] = useState(0.85); // mobile PDF preview scale
   const [showSuggestions, setShowSuggestions] = useState(false); // autocomplete suggestions toggle
   const [focusedItemRowIndex, setFocusedItemRowIndex] = useState(null); // track product row with active autocomplete suggestions
+  const [needShipping, setNeedShipping] = useState(false);
+  const [shippingName, setShippingName] = useState("");
+  const [shippingAddress, setShippingAddress] = useState("");
+  const [shippingGstin, setShippingGstin] = useState("");
+  const [shippingState, setShippingState] = useState("Karnataka");
+  const [shippingStateCode, setShippingStateCode] = useState("29");
 
   // Taxes
   const [cgstPercent, setCgstPercent] = useState("9");
@@ -193,6 +199,12 @@ export default function InvoiceEditor() {
       setCustomerGstin(data.customer_gstin);
       setCustomerState(data.customer_state);
       setCustomerStateCode(data.customer_state_code);
+      setNeedShipping(data.need_shipping || false);
+      setShippingName(data.shipping_name || "");
+      setShippingAddress(data.shipping_address || "");
+      setShippingGstin(data.shipping_gstin || "");
+      setShippingState(data.shipping_state || "Karnataka");
+      setShippingStateCode(data.shipping_state_code || "29");
       setCgstPercent(data.cgst_percent?.toString() || "9");
       setSgstPercent(data.sgst_percent?.toString() || "9");
       setIgstPercent(data.igst_percent?.toString() || "18");
@@ -366,6 +378,12 @@ export default function InvoiceEditor() {
         customer_gstin: customerGstin.toUpperCase(),
         customer_state: customerState,
         customer_state_code: customerStateCode,
+        need_shipping: needShipping,
+        shipping_name: shippingName,
+        shipping_address: shippingAddress,
+        shipping_gstin: shippingGstin.toUpperCase(),
+        shipping_state: shippingState,
+        shipping_state_code: shippingStateCode,
         cgst_percent: parseFloat(cgstPercent) || 0,
         sgst_percent: parseFloat(sgstPercent) || 0,
         igst_percent: parseFloat(igstPercent) || 0,
@@ -477,6 +495,12 @@ export default function InvoiceEditor() {
     customer_gstin: customerGstin,
     customer_state: customerState,
     customer_state_code: customerStateCode,
+    need_shipping: needShipping,
+    shipping_name: shippingName || customerName || "Shipping Name Placeholder",
+    shipping_address: shippingAddress || customerAddress || "Shipping Address Placeholder",
+    shipping_gstin: shippingGstin || customerGstin,
+    shipping_state: shippingState,
+    shipping_state_code: shippingStateCode,
     cgst_percent: cgstPercent,
     sgst_percent: sgstPercent,
     igst_percent: igstPercent,
@@ -775,6 +799,61 @@ export default function InvoiceEditor() {
                   <input type="text" value={customerGstin} onChange={(e) => setCustomerGstin(e.target.value)} placeholder="Customer GSTIN" style={{ textTransform: "uppercase" }} />
                   <input type="text" value={customerStateCode} onChange={(e) => setCustomerStateCode(e.target.value)} placeholder="State Code (e.g. 29)" />
                 </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "5px" }}>
+                  <input 
+                    type="checkbox" 
+                    id="needShipping" 
+                    checked={needShipping} 
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setNeedShipping(checked);
+                      if (checked) {
+                        if (!shippingName) setShippingName(customerName);
+                        if (!shippingAddress) setShippingAddress(customerAddress);
+                        if (!shippingGstin) setShippingGstin(customerGstin);
+                        if (!shippingState) setShippingState(customerState);
+                        if (!shippingStateCode) setShippingStateCode(customerStateCode);
+                      }
+                    }} 
+                  />
+                  <label htmlFor="needShipping" style={{ fontSize: "12px", color: "var(--text-secondary)", cursor: "pointer", userSelect: "none" }}>
+                    Enable Shipping Details (Consignee)
+                  </label>
+                </div>
+
+                {needShipping && (
+                  <div style={{ borderLeft: "2px solid var(--accent-color)", paddingLeft: "12px", display: "flex", flexDirection: "column", gap: "12px", marginTop: "5px" }}>
+                    <div style={{ fontSize: "11px", fontWeight: "bold", color: "var(--accent-color)" }}>SHIPPING DETAILS (CONSIGNEE)</div>
+                    <input 
+                      type="text" 
+                      value={shippingName} 
+                      onChange={(e) => setShippingName(e.target.value)} 
+                      placeholder="Consignee Name" 
+                    />
+                    <textarea 
+                      rows={2} 
+                      value={shippingAddress} 
+                      onChange={(e) => setShippingAddress(e.target.value)} 
+                      placeholder="Consignee Shipping Address" 
+                    />
+                    <div className="form-grid-2">
+                      <input 
+                        type="text" 
+                        value={shippingGstin} 
+                        onChange={(e) => setShippingGstin(e.target.value)} 
+                        placeholder="Consignee GSTIN" 
+                        style={{ textTransform: "uppercase" }} 
+                      />
+                      <input 
+                        type="text" 
+                        value={shippingStateCode} 
+                        onChange={(e) => setShippingStateCode(e.target.value)} 
+                        placeholder="State Code (e.g. 29)" 
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
