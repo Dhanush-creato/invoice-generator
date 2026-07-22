@@ -375,13 +375,13 @@ export default function InvoiceEditor() {
         template_type: templateType,
         customer_name: customerName,
         customer_address: customerAddress,
-        customer_gstin: customerGstin.toUpperCase(),
+        customer_gstin: (customerGstin || "").toUpperCase(),
         customer_state: customerState,
         customer_state_code: customerStateCode,
         need_shipping: needShipping,
         shipping_name: shippingName,
         shipping_address: shippingAddress,
-        shipping_gstin: shippingGstin.toUpperCase(),
+        shipping_gstin: (shippingGstin || "").toUpperCase(),
         shipping_state: shippingState,
         shipping_state_code: shippingStateCode,
         cgst_percent: parseFloat(cgstPercent) || 0,
@@ -422,26 +422,31 @@ export default function InvoiceEditor() {
       const invoiceDocId = id || doc(collection(db, "invoices")).id;
       let pdfUrl = "";
 
-      // Attempt background PDF generation and upload if online
+      // Attempt background PDF generation and upload if online (non-blocking)
       if (!isOffline) {
-        try {
-          const element = document.querySelector(".invoice-preview-container");
-          if (element) {
-            const opt = {
-              margin:       0,
-              filename:     `Invoice_${invoiceNumber}.pdf`,
-              image:        { type: 'jpeg', quality: 0.98 },
-              html2canvas:  { scale: 2.0, useCORS: true, letterRendering: true },
-              jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-            const pdfBlob = await html2pdf().from(element).set(opt).outputPdf('blob');
-            const storageRef = ref(storage, `invoices/${invoiceDocId}.pdf`);
-            await uploadBytes(storageRef, pdfBlob);
-            pdfUrl = await getDownloadURL(storageRef);
+        (async () => {
+          try {
+            const element = document.getElementById("hidden-pdf-print-target");
+            if (element) {
+              const opt = {
+                margin:       0,
+                filename:     `Invoice_${invoiceNumber}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2.0, useCORS: true, letterRendering: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+              };
+              const pdfBlob = await html2pdf().from(element).set(opt).output('blob');
+              const storageRef = ref(storage, `invoices/${invoiceDocId}.pdf`);
+              await uploadBytes(storageRef, pdfBlob);
+              const downloadUrl = await getDownloadURL(storageRef);
+              
+              // Update the invoice doc with the pdf_url silently in the background
+              await setDoc(doc(db, "invoices", invoiceDocId), { pdf_url: downloadUrl }, { merge: true });
+            }
+          } catch (storageErr) {
+            console.warn("Background Firebase Storage PDF upload skipped or failed:", storageErr);
           }
-        } catch (storageErr) {
-          console.warn("Firebase Storage upload skipped or failed:", storageErr);
-        }
+        })();
       }
 
       const finalPayload = {
@@ -538,9 +543,9 @@ export default function InvoiceEditor() {
     );
   }
 
-  // Download PDF from live preview
+  // Download PDF from hidden target
   const handleDownloadPdf = () => {
-    const element = document.querySelector(".invoice-preview-container");
+    const element = document.getElementById("hidden-pdf-print-target");
     if (!element) return;
     const opt = {
       margin: 0,
@@ -554,6 +559,18 @@ export default function InvoiceEditor() {
 
   return (
     <div className="app-container">
+      {/* Hidden print container for always-on PDF generation */}
+      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', width: '760px' }}>
+        <div id="hidden-pdf-print-target">
+          {templateType === "template1" ? (
+            <Template1 invoiceData={previewInvoiceData} orgData={previewOrgData} />
+          ) : templateType === "template3" ? (
+            <Template3 invoiceData={previewInvoiceData} orgData={previewOrgData} />
+          ) : (
+            <Template2 invoiceData={previewInvoiceData} orgData={previewOrgData} />
+          )}
+        </div>
+      </div>
       {toast && (
         <Toast
           message={toast.message}

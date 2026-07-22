@@ -116,6 +116,13 @@ export default function Template2({ invoiceData, orgData }) {
 
   const totalQty = items.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0);
 
+  // Adjust heights and font sizes of Logistics grid based on whether shipping details are enabled (to keep height matching left side)
+  const rowMinHeight = need_shipping ? '38px' : '28px';
+  const termsMinHeight = need_shipping ? '60px' : '35px';
+  const cellPadding = need_shipping ? '4px 8px' : '2px 6px';
+  const labelFontSize = need_shipping ? '9px' : '8px';
+  const valFontSize = need_shipping ? '10.5px' : '9.5px';
+
   return (
     <div className="invoice-preview-container" style={{ padding: '20px', background: '#fff', color: '#000' }}>
       <div className="tax-invoice-deepam" style={{ border: '1px solid #000', fontSize: '11px', lineHeight: '1.3' }}>
@@ -132,17 +139,19 @@ export default function Template2({ invoiceData, orgData }) {
           <div style={{ flex: 1, borderRight: '1px solid #000', display: 'flex', flexDirection: 'column' }}>
             
             {/* Seller */}
-            <div style={{ padding: '8px', borderBottom: '1px solid #000', minHeight: '90px' }}>
-              <div style={{ fontWeight: 'bold', fontSize: '12px' }}>{org.name}</div>
-              <div style={{ lineHeight: '1.3', fontSize: '10px' }}>
-                {org.address ? org.address.split(/[!\n]/).map((line, lIdx) => {
-                  const trimmed = line.trim();
-                  return trimmed ? <div key={lIdx}>{trimmed}</div> : null;
-                }) : null}
+            <div style={{ padding: '8px', borderBottom: '1px solid #000', minHeight: '90px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontWeight: 'bold', fontSize: '15px' }}>{org.name}</div>
+                <div style={{ lineHeight: '1.3', fontSize: '10px' }}>
+                  {org.address ? org.address.split(/[!\n]/).map((line, lIdx) => {
+                    const trimmed = line.trim();
+                    return trimmed ? <div key={lIdx}>{trimmed}</div> : null;
+                  }) : null}
+                </div>
+                {org.phone && <div>PH NO-{org.phone}</div>}
+                <div><span style={{ fontWeight: 'bold' }}>GSTIN/UIN:</span> <span style={{ textTransform: 'uppercase' }}>{org.gstin}</span></div>
+                <div><span style={{ fontWeight: 'bold' }}>State Name:</span> Karnataka, Code : {org.state_code}</div>
               </div>
-              {org.phone && <div>PH NO-{org.phone}</div>}
-              <div><span style={{ fontWeight: 'bold' }}>GSTIN/UIN:</span> <span style={{ textTransform: 'uppercase' }}>{org.gstin}</span></div>
-              <div><span style={{ fontWeight: 'bold' }}>State Name:</span> Karnataka, Code : {org.state_code}</div>
             </div>
 
             {/* Consignee (Ship to) */}
@@ -178,75 +187,75 @@ export default function Template2({ invoiceData, orgData }) {
           </div>
 
           {/* Logistics & Dates column */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', borderBottom: '1px solid #000' }}>
-              <div style={{ flex: 1, padding: '4px 8px', borderRight: '1px solid #000' }}>
-                <span style={{ color: '#555', display: 'block', fontSize: '9px' }}>Invoice No.</span>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', fontSize: valFontSize }}>
+            <div style={{ display: 'flex', borderBottom: '1px solid #000', minHeight: rowMinHeight }}>
+              <div style={{ flex: 1, padding: cellPadding, borderRight: '1px solid #000' }}>
+                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Invoice No.</span>
                 <span style={{ fontWeight: 'bold' }}>{invoice_number}</span>
               </div>
-              <div style={{ flex: 1, padding: '4px 8px' }}>
-                <span style={{ color: '#555', display: 'block', fontSize: '9px' }}>Dated</span>
+              <div style={{ flex: 1, padding: cellPadding }}>
+                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Dated</span>
                 <span style={{ fontWeight: 'bold' }}>{formatDate(date)}</span>
               </div>
             </div>
 
-            <div style={{ display: 'flex', borderBottom: '1px solid #000' }}>
-              <div style={{ flex: 1, padding: '4px 8px', borderRight: '1px solid #000', minHeight: '35px' }}>
-                <span style={{ color: '#555', display: 'block', fontSize: '9px' }}>Delivery Note</span>
+            <div style={{ display: 'flex', borderBottom: '1px solid #000', minHeight: rowMinHeight }}>
+              <div style={{ flex: 1, padding: cellPadding, borderRight: '1px solid #000' }}>
+                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Delivery Note</span>
                 <span>{delivery_note || "N/A"}</span>
               </div>
-              <div style={{ flex: 1, padding: '4px 8px', minHeight: '35px' }}>
-                <span style={{ color: '#555', display: 'block', fontSize: '9px' }}>Mode/Terms of Payment</span>
+              <div style={{ flex: 1, padding: cellPadding }}>
+                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Mode/Terms of Payment</span>
                 <span>{payment_mode}</span>
               </div>
             </div>
 
-            <div style={{ display: 'flex', borderBottom: '1px solid #000' }}>
-              <div style={{ flex: 1, padding: '4px 8px', borderRight: '1px solid #000', minHeight: '35px' }}>
-                <span style={{ color: '#555', display: 'block', fontSize: '9px' }}>Reference No. & Date.</span>
+            <div style={{ display: 'flex', borderBottom: '1px solid #000', minHeight: rowMinHeight }}>
+              <div style={{ flex: 1, padding: cellPadding, borderRight: '1px solid #000' }}>
+                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Reference No. & Date.</span>
                 <span>{ref_no_date || "N/A"}</span>
               </div>
-              <div style={{ flex: 1, padding: '4px 8px', minHeight: '35px' }}>
-                <span style={{ color: '#555', display: 'block', fontSize: '9px' }}>Other References</span>
+              <div style={{ flex: 1, padding: cellPadding }}>
+                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Other References</span>
                 <span>{other_references || "N/A"}</span>
               </div>
             </div>
 
-            <div style={{ display: 'flex', borderBottom: '1px solid #000' }}>
-              <div style={{ flex: 1, padding: '4px 8px', borderRight: '1px solid #000', minHeight: '35px' }}>
-                <span style={{ color: '#555', display: 'block', fontSize: '9px' }}>Buyer's Order No.</span>
+            <div style={{ display: 'flex', borderBottom: '1px solid #000', minHeight: rowMinHeight }}>
+              <div style={{ flex: 1, padding: cellPadding, borderRight: '1px solid #000' }}>
+                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Buyer's Order No.</span>
                 <span>{buyer_order_no || "N/A"}</span>
               </div>
-              <div style={{ flex: 1, padding: '4px 8px', minHeight: '35px' }}>
-                <span style={{ color: '#555', display: 'block', fontSize: '9px' }}>Dated</span>
+              <div style={{ flex: 1, padding: cellPadding }}>
+                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Dated</span>
                 <span>{buyer_order_date ? formatDate(buyer_order_date) : "N/A"}</span>
               </div>
             </div>
 
-            <div style={{ display: 'flex', borderBottom: '1px solid #000' }}>
-              <div style={{ flex: 1, padding: '4px 8px', borderRight: '1px solid #000', minHeight: '35px' }}>
-                <span style={{ color: '#555', display: 'block', fontSize: '9px' }}>Dispatch Doc No.</span>
+            <div style={{ display: 'flex', borderBottom: '1px solid #000', minHeight: rowMinHeight }}>
+              <div style={{ flex: 1, padding: cellPadding, borderRight: '1px solid #000' }}>
+                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Dispatch Doc No.</span>
                 <span>{dispatch_doc_no || "N/A"}</span>
               </div>
-              <div style={{ flex: 1, padding: '4px 8px', minHeight: '35px' }}>
-                <span style={{ color: '#555', display: 'block', fontSize: '9px' }}>Delivery Note Date</span>
+              <div style={{ flex: 1, padding: cellPadding }}>
+                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Delivery Note Date</span>
                 <span>{dispatch_doc_date ? formatDate(dispatch_doc_date) : "N/A"}</span>
               </div>
             </div>
 
-            <div style={{ display: 'flex', borderBottom: '1px solid #000' }}>
-              <div style={{ flex: 1, padding: '4px 8px', borderRight: '1px solid #000', minHeight: '35px' }}>
-                <span style={{ color: '#555', display: 'block', fontSize: '9px' }}>Dispatched through</span>
+            <div style={{ display: 'flex', borderBottom: '1px solid #000', minHeight: rowMinHeight }}>
+              <div style={{ flex: 1, padding: cellPadding, borderRight: '1px solid #000' }}>
+                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Dispatched through</span>
                 <span>{dispatched_through || "N/A"}</span>
               </div>
-              <div style={{ flex: 1, padding: '4px 8px', minHeight: '35px' }}>
-                <span style={{ color: '#555', display: 'block', fontSize: '9px' }}>Destination</span>
+              <div style={{ flex: 1, padding: cellPadding }}>
+                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Destination</span>
                 <span>{destination || "N/A"}</span>
               </div>
             </div>
 
-            <div style={{ padding: '4px 8px', flexGrow: 1, minHeight: '50px' }}>
-              <span style={{ color: '#555', display: 'block', fontSize: '9px' }}>Terms of Delivery</span>
+            <div style={{ padding: cellPadding, flexGrow: 1, minHeight: termsMinHeight }}>
+              <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Terms of Delivery</span>
               <div style={{ whiteSpace: 'pre-wrap' }}>{terms_of_delivery || "N/A"}</div>
             </div>
           </div>
@@ -258,10 +267,9 @@ export default function Template2({ invoiceData, orgData }) {
             <tr style={{ height: '24px' }}>
               <th style={{ width: '4%', borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'center' }}>Sl No.</th>
               <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'left' }}>Description of Goods</th>
-              <th style={{ width: '10%', borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'center' }}>HSN/SAC</th>
-              <th style={{ width: '8%', borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'center' }}>GST Rate</th>
+              <th style={{ width: '12%', borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'center' }}>HSN/SAC</th>
               <th style={{ width: '12%', borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>Quantity</th>
-              <th style={{ width: '10%', borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>Rate</th>
+              <th style={{ width: '12%', borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>Rate</th>
               <th style={{ width: '8%', borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'center' }}>per</th>
               <th style={{ width: '12%', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>Amount</th>
             </tr>
@@ -272,11 +280,6 @@ export default function Template2({ invoiceData, orgData }) {
                 <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'center', verticalAlign: 'top' }}>{idx + 1}</td>
                 <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'left', verticalAlign: 'top', fontWeight: 'bold' }}>{item.description}</td>
                 <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'center', verticalAlign: 'top' }}>{item.hsn_code}</td>
-                <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'center', verticalAlign: 'top' }}>
-                  {is_interstate 
-                    ? `${parseFloat(igst_percent)} %` 
-                    : `${parseFloat(cgst_percent) + parseFloat(sgst_percent)} %`}
-                </td>
                 <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', verticalAlign: 'top', fontWeight: 'bold' }}>{item.quantity} {item.unit || 'nos'}</td>
                 <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', verticalAlign: 'top' }}>{parseFloat(item.rate || 0).toFixed(2)}</td>
                 <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'center', verticalAlign: 'top' }}>{item.unit || 'nos.'}</td>
@@ -287,7 +290,6 @@ export default function Template2({ invoiceData, orgData }) {
             {/* Empty space filler */}
             {items.length < 4 && Array.from({ length: 4 - items.length }).map((_, idx) => (
               <tr key={`empty-${idx}`} style={{ height: '30px' }}>
-                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
                 <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
                 <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
                 <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
@@ -306,8 +308,7 @@ export default function Template2({ invoiceData, orgData }) {
                   <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>CGST</td>
                   <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
                   <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                  <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>{cgst_percent}%</td>
                   <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
                   <td style={{ padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>{cgstAmount.toFixed(2)}</td>
                 </tr>
@@ -316,8 +317,7 @@ export default function Template2({ invoiceData, orgData }) {
                   <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>SGST</td>
                   <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
                   <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                  <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>{sgst_percent}%</td>
                   <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
                   <td style={{ padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>{sgstAmount.toFixed(2)}</td>
                 </tr>
@@ -328,31 +328,26 @@ export default function Template2({ invoiceData, orgData }) {
                 <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>IGST</td>
                 <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
                 <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+                <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>{igst_percent}%</td>
                 <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
                 <td style={{ padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>{igstAmount.toFixed(2)}</td>
               </tr>
             )}
 
-            {roundOff !== 0 && (
-              <tr style={{ height: '22px' }}>
-                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>ROUND OFF - SALES</td>
-                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                <td style={{ padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>{roundOff.toFixed(2)}</td>
-              </tr>
-            )}
+            <tr style={{ height: '22px' }}>
+              <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+              <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>ROUND OFF - SALES</td>
+              <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+              <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+              <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+              <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
+              <td style={{ padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>{roundOff.toFixed(2)}</td>
+            </tr>
 
             {/* Total Row */}
             <tr style={{ height: '24px', borderTop: '1px solid #000', borderBottom: '1px solid #000', background: '#fafafa', fontWeight: 'bold' }}>
               <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
               <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'left' }}>Total</td>
-              <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
               <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
               <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right' }}>{totalQty.toFixed(2)} {items[0]?.unit || 'nos'}</td>
               <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
@@ -368,11 +363,10 @@ export default function Template2({ invoiceData, orgData }) {
           <div style={{ fontWeight: 'bold', fontSize: '11.5px', textTransform: 'capitalize' }}>Indian Rupees {numberToWords(grandTotal).replace('Rupees ', '')}</div>
         </div>
 
-        {/* HSN/SAC Tax Summary Table */}
+        {/* GST Tax Summary Table in Box Format (Single-row, no HSN) */}
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', borderBottom: '1px solid #000', textAlign: 'center' }}>
           <thead>
             <tr style={{ background: '#eee', fontWeight: 'bold' }}>
-              <th rowSpan={2} style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px' }}>HSN/SAC</th>
               <th rowSpan={2} style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px' }}>Taxable Value</th>
               {!is_interstate ? (
                 <>
@@ -401,58 +395,22 @@ export default function Template2({ invoiceData, orgData }) {
             </tr>
           </thead>
           <tbody>
-            {Object.values(hsnGroups).map((group, idx) => {
-              const val = group.taxableValue;
-              let cRate = 0, cAmt = 0, sRate = 0, sAmt = 0, iRate = 0, iAmt = 0;
-              if (is_interstate) {
-                iRate = parseFloat(igst_percent);
-                iAmt = val * (iRate / 100);
-              } else {
-                cRate = parseFloat(cgst_percent);
-                cAmt = val * (cRate / 100);
-                sRate = parseFloat(sgst_percent);
-                sAmt = val * (sRate / 100);
-              }
-              const rowTax = cAmt + sAmt + iAmt;
-
-              return (
-                <tr key={idx} style={{ height: '24px' }}>
-                  <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>{group.hsn}</td>
-                  <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>{val.toFixed(2)}</td>
-                  {!is_interstate ? (
-                    <>
-                      <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>{cRate}%</td>
-                      <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>{cAmt.toFixed(2)}</td>
-                      <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>{sRate}%</td>
-                      <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>{sAmt.toFixed(2)}</td>
-                    </>
-                  ) : (
-                    <>
-                      <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>{iRate}%</td>
-                      <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>{iAmt.toFixed(2)}</td>
-                    </>
-                  )}
-                  <td style={{ borderBottom: '1px solid #000', padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>{rowTax.toFixed(2)}</td>
-                </tr>
-              );
-            })}
-            <tr style={{ height: '24px', fontWeight: 'bold', background: '#fafafa' }}>
-              <td style={{ borderRight: '1px solid #000', padding: '4px' }}>Total</td>
-              <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right' }}>{taxableAmount.toFixed(2)}</td>
+            <tr style={{ height: '24px', fontWeight: 'bold' }}>
+              <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>{taxableAmount.toFixed(2)}</td>
               {!is_interstate ? (
                 <>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right' }}>{cgstAmount.toFixed(2)}</td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right' }}>{sgstAmount.toFixed(2)}</td>
+                  <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>{cgst_percent}%</td>
+                  <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>{cgstAmount.toFixed(2)}</td>
+                  <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>{sgst_percent}%</td>
+                  <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>{sgstAmount.toFixed(2)}</td>
                 </>
               ) : (
                 <>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px' }}></td>
-                  <td style={{ borderRight: '1px solid #000', padding: '4px', textAlign: 'right' }}>{igstAmount.toFixed(2)}</td>
+                  <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>{igst_percent}%</td>
+                  <td style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'right' }}>{igstAmount.toFixed(2)}</td>
                 </>
               )}
-              <td style={{ padding: '4px', textAlign: 'right' }}>{totalTax.toFixed(2)}</td>
+              <td style={{ borderBottom: '1px solid #000', padding: '4px', textAlign: 'right', fontWeight: 'bold' }}>{totalTax.toFixed(2)}</td>
             </tr>
           </tbody>
         </table>
@@ -505,7 +463,7 @@ export default function Template2({ invoiceData, orgData }) {
 
           {/* Authorised Signatory */}
           <div style={{ flex: 0.8, padding: '6px 8px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-end', position: 'relative' }}>
-            <div style={{ fontSize: '9px', fontWeight: 'bold' }}>for {org.name}</div>
+            <div style={{ fontSize: '13px', fontWeight: 'bold' }}>for {org.name}</div>
             
             {org.signature_url && (
               <img src={org.signature_url} alt="Authorized Signature" className="invoice-signature" style={{ maxHeight: '55px', position: 'absolute', bottom: '25px', right: '25px', opacity: 0.9 }} />

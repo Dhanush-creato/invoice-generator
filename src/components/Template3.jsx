@@ -20,7 +20,13 @@ export default function Template3({ invoiceData, orgData }) {
     bank_acc_type = "",
     bank_ifsc = "",
     notes = "",
-    terms = ""
+    terms = "",
+    need_shipping = false,
+    shipping_name = "",
+    shipping_address = "",
+    shipping_gstin = "",
+    shipping_state = "Karnataka",
+    shipping_state_code = "29"
   } = invoiceData || {};
 
   const isIconSystems = (org.name || "").toUpperCase().includes("ICON SYSTEMS");
@@ -120,7 +126,9 @@ export default function Template3({ invoiceData, orgData }) {
   }
 
   const gstTotal = cgstAmount + sgstAmount + igstAmount;
-  const grandTotal = taxableAmount + gstTotal;
+  const rawGrandTotal = taxableAmount + gstTotal;
+  const grandTotal = Math.round(rawGrandTotal);
+  const roundOff = parseFloat((grandTotal - rawGrandTotal).toFixed(2));
 
   return (
     <div className="invoice-preview-container pre-printed-layout" style={{
@@ -159,21 +167,58 @@ export default function Template3({ invoiceData, orgData }) {
           {/* Customer & Invoice Meta Details */}
           <div style={{ display: 'flex', borderBottom: '1px solid #000', fontSize: '11px' }}>
             {/* Buyer */}
-            <div style={{ flex: 1.2, borderRight: '1px solid #000', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div style={{ padding: '5px 8px' }}>
-                <span style={{ fontWeight: 'bold', fontSize: '10px', display: 'block' }}>TO,</span>
-                <div style={{ fontWeight: 'bold', margin: '2px 0', fontSize: '12px' }}>{customer_name}</div>
-                <div style={{ lineHeight: '1.3', fontSize: '10px' }}>
-                  {customer_address ? customer_address.split(/[!\n]/).map((line, lIdx) => {
-                    const trimmed = line.trim();
-                    return trimmed ? <div key={lIdx}>{trimmed}</div> : null;
-                  }) : null}
+            {need_shipping ? (
+              <div style={{ flex: 1.2, borderRight: '1px solid #000', display: 'flex', fontSize: '11px' }}>
+                {/* Billed To */}
+                <div style={{ flex: 1, borderRight: '1px solid #000', padding: '5px 8px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <span style={{ fontWeight: 'bold', fontSize: '9px', display: 'block', textDecoration: 'underline' }}>Billed to: (TO)</span>
+                    <div style={{ fontWeight: 'bold', margin: '2px 0', fontSize: '11px' }}>{customer_name}</div>
+                    <div style={{ lineHeight: '1.3', fontSize: '9px' }}>
+                      {customer_address ? customer_address.split(/[!\n]/).map((line, lIdx) => {
+                        const trimmed = line.trim();
+                        return trimmed ? <div key={lIdx}>{trimmed}</div> : null;
+                      }) : null}
+                    </div>
+                  </div>
+                  <div style={{ fontWeight: 'bold', fontSize: '9px', marginTop: '4px' }}>
+                    GSTIN : <span style={{ textTransform: 'uppercase' }}>{customer_gstin || "N/A"}</span>
+                  </div>
+                </div>
+                {/* Shipped To */}
+                <div style={{ flex: 1, padding: '5px 8px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <span style={{ fontWeight: 'bold', fontSize: '9px', display: 'block', textDecoration: 'underline' }}>Shipped to: (Consignee)</span>
+                    <div style={{ fontWeight: 'bold', margin: '2px 0', fontSize: '11px' }}>{shipping_name || customer_name}</div>
+                    <div style={{ lineHeight: '1.3', fontSize: '9px' }}>
+                      {(shipping_address || customer_address) ? (shipping_address || customer_address).split(/[!\n]/).map((line, lIdx) => {
+                        const trimmed = line.trim();
+                        return trimmed ? <div key={lIdx}>{trimmed}</div> : null;
+                      }) : null}
+                    </div>
+                  </div>
+                  <div style={{ fontWeight: 'bold', fontSize: '9px', marginTop: '4px' }}>
+                    GSTIN : <span style={{ textTransform: 'uppercase' }}>{shipping_gstin || customer_gstin || "N/A"}</span>
+                  </div>
                 </div>
               </div>
-              <div style={{ padding: '4px 8px', fontWeight: 'bold', fontSize: '10px' }}>
-                Customer GSTIN : <span style={{ textTransform: 'uppercase' }}>{customer_gstin || "N/A"}</span>
+            ) : (
+              <div style={{ flex: 1.2, borderRight: '1px solid #000', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div style={{ padding: '5px 8px' }}>
+                  <span style={{ fontWeight: 'bold', fontSize: '10px', display: 'block' }}>TO,</span>
+                  <div style={{ fontWeight: 'bold', margin: '2px 0', fontSize: '12px' }}>{customer_name}</div>
+                  <div style={{ lineHeight: '1.3', fontSize: '10px' }}>
+                    {customer_address ? customer_address.split(/[!\n]/).map((line, lIdx) => {
+                      const trimmed = line.trim();
+                      return trimmed ? <div key={lIdx}>{trimmed}</div> : null;
+                    }) : null}
+                  </div>
+                </div>
+                <div style={{ padding: '4px 8px', fontWeight: 'bold', fontSize: '10px' }}>
+                  Customer GSTIN : <span style={{ textTransform: 'uppercase' }}>{customer_gstin || "N/A"}</span>
+                </div>
               </div>
-            </div>
+            )}
             
             {/* Invoice Meta details inside the right side (M/s Icon Systems layout) */}
             <div style={{ flex: 0.8, padding: '5px 8px', fontSize: '11px', lineHeight: '1.4' }}>
@@ -243,10 +288,10 @@ export default function Template3({ invoiceData, orgData }) {
           {/* Totals & Calculations Grid */}
           <div style={{ display: 'flex', fontSize: '12px' }}>
             {/* Word Conversion Left block */}
-            <div style={{ flex: 1.2, padding: '8px', borderRight: '1px solid #000', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div>
-                <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>Total in words</span>
-                <div style={{ fontWeight: 'bold', fontStyle: 'italic', fontSize: '11px', lineHeight: '1.4' }}>{numberToWords(grandTotal)}</div>
+            <div style={{ flex: 1.2, padding: '8px', borderRight: '1px solid #000', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+              <div style={{ fontSize: '11px', lineHeight: '1.4', marginTop: 'auto' }}>
+                <span style={{ fontWeight: 'bold' }}>Total in words: </span>
+                <span style={{ fontWeight: 'bold', fontStyle: 'italic' }}>{numberToWords(grandTotal)}</span>
               </div>
             </div>
             {/* Math Calculations block */}
@@ -277,6 +322,10 @@ export default function Template3({ invoiceData, orgData }) {
                   </div>
                 </>
               )}
+              <div style={{ display: 'flex', borderBottom: '1px solid #000' }}>
+                <div style={{ flex: 1.3, padding: '6px 8px', borderRight: '1px solid #000', fontWeight: 'bold', textAlign: 'right' }}>Round off</div>
+                <div style={{ flex: 0.7, padding: '6px 8px', fontWeight: 'bold', textAlign: 'right' }}>₹{roundOff.toFixed(2)}</div>
+              </div>
               
               <div style={{ display: 'flex', background: '#f5f5f5', fontSize: '13px' }}>
                 <div style={{ flex: 1.3, padding: '8px', borderRight: '1px solid #000', fontWeight: 'extrabold', textAlign: 'right' }}>TOTAL</div>
@@ -312,14 +361,14 @@ export default function Template3({ invoiceData, orgData }) {
           </div>
           {/* Authorised Signature */}
           <div style={{ flex: 0.8, padding: '8px 8px 15px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
-            <div style={{ fontWeight: 'bold', fontSize: '11px' }}>For {org.name}</div>
+            <div style={{ fontWeight: 'bold', fontSize: '13px' }}>For {org.name}</div>
             
             {/* Signature image if uploaded in settings */}
             {org.signature_url && (
               <img src={org.signature_url} alt="Signature Stamp" className="invoice-signature" style={{ maxHeight: '55px', position: 'absolute', top: '25px', opacity: 0.85 }} />
             )}
             
-            <div style={{ fontWeight: 'bold', marginTop: 'auto', borderTop: '1px dashed #000', width: '80%', textAlign: 'center', paddingTop: '4px' }}>Proprietor</div>
+            <div style={{ fontWeight: 'bold', marginTop: 'auto', textAlign: 'center', fontSize: '9.5px' }}>Proprietor</div>
           </div>
         </div>
 

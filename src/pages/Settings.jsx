@@ -3,9 +3,10 @@ import { db, storage, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { Link, useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
-import { Save, Building2, Landmark, ShieldCheck, Upload, Loader, AlertCircle } from "lucide-react";
+import { Save, Building2, Landmark, ShieldCheck, Upload, Loader, AlertCircle, LayoutDashboard, PlusCircle } from "lucide-react";
 
 export default function Settings() {
   const [profile, setProfile] = useState(null);
@@ -15,6 +16,21 @@ export default function Settings() {
   const [logoFile, setLogoFile] = useState(null);
   const [sigFile, setSigFile] = useState(null);
   const [phonepeFile, setPhonepeFile] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if initial load on mobile and path is settings
+    const isMobile = window.innerWidth <= 992;
+    const isInitialLoad = !sessionStorage.getItem("app_initialized");
+    
+    // Set initialization flag immediately
+    sessionStorage.setItem("app_initialized", "true");
+
+    if (isMobile && isInitialLoad) {
+      console.log("Redirecting initial mobile load from settings to dashboard");
+      navigate("/");
+    }
+  }, [navigate]);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -166,6 +182,47 @@ export default function Settings() {
       <Sidebar userProfile={profile} />
       <main className="main-content">
         <Header title="Org Profile Settings" />
+
+        {/* Quick Navigation Shortcuts */}
+        <div style={{
+          display: "flex",
+          gap: "12px",
+          marginBottom: "24px",
+          flexWrap: "wrap"
+        }}>
+          <Link to="/" style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            backgroundColor: "var(--card-bg)",
+            border: "1px solid var(--card-border)",
+            color: "var(--text-primary)",
+            padding: "8px 16px",
+            borderRadius: "8px",
+            textDecoration: "none",
+            fontSize: "13px",
+            fontWeight: "600"
+          }}>
+            <LayoutDashboard size={16} />
+            Go to Dashboard
+          </Link>
+          <Link to="/invoices/new" style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            backgroundColor: "var(--accent-color)",
+            color: "#fff",
+            padding: "8px 16px",
+            borderRadius: "8px",
+            textDecoration: "none",
+            fontSize: "13px",
+            fontWeight: "600",
+            boxShadow: "0 4px 12px rgba(59, 130, 246, 0.2)"
+          }}>
+            <PlusCircle size={16} />
+            Create Invoice
+          </Link>
+        </div>
 
         {message && (
           <div className="glass" style={{

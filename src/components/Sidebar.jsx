@@ -111,7 +111,7 @@ export default function Sidebar({ userProfile }) {
           borderBottom: "1px solid var(--border-color)",
           justifyContent: "space-between",
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <Link to="/" style={{ display: "flex", alignItems: "center", gap: "12px", textDecoration: "none", color: "inherit" }}>
             <img
               src="/logo.png"
               alt="Logo"
@@ -127,7 +127,7 @@ export default function Sidebar({ userProfile }) {
               <h2 style={{ fontSize: "16px", fontWeight: "700", letterSpacing: "0.5px" }}>InvoiceGen</h2>
               <span style={{ fontSize: "10px", color: "var(--text-secondary)", fontWeight: "600" }}>ORGANIZATION SUITE</span>
             </div>
-          </div>
+          </Link>
 
           {/* Close button — only visible on mobile */}
           <button
@@ -201,7 +201,7 @@ export default function Sidebar({ userProfile }) {
           borderTop: "1px solid var(--border-color)",
           backgroundColor: "rgba(0, 0, 0, 0.1)",
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+          <Link to="/" style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", textDecoration: "none", color: "inherit" }}>
             {userProfile?.logo_url ? (
               <img src={userProfile.logo_url} alt="Org" style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }} />
             ) : (
@@ -223,7 +223,7 @@ export default function Sidebar({ userProfile }) {
               <h4 style={{ fontSize: "13px", fontWeight: "600" }}>{orgName}</h4>
               <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>Active Org</span>
             </div>
-          </div>
+          </Link>
 
           <button
             onClick={handleLogout}
