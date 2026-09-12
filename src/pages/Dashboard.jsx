@@ -274,7 +274,7 @@ export default function Dashboard() {
         </div>
 
         {/* Document List Panel */}
-        <div className="glass" style={{ padding: "32px", overflow: "hidden" }}>
+        <div className="glass dashboard-list-panel" style={{ padding: "32px", overflow: "hidden" }}>
           
           {/* List Toolbar */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "20px", marginBottom: "24px" }}>
@@ -403,16 +403,16 @@ export default function Dashboard() {
               </p>
             </div>
           ) : (
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px", minWidth: "600px" }}>
+            <div style={{ overflowX: "auto", position: "relative" }}>
+              <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: "14px", minWidth: "650px" }}>
                 <thead>
-                  <tr style={{ textAlign: "left", borderBottom: "1px solid var(--border-color)", backgroundColor: "rgba(255,255,255,0.01)" }}>
-                    <th style={{ padding: "16px 12px" }}>Doc # / Reference</th>
-                    <th style={{ padding: "16px 12px" }}>Client</th>
-                    <th style={{ padding: "16px 12px" }}>Date</th>
-                    <th style={{ padding: "16px 12px" }}>Type</th>
-                    <th style={{ padding: "16px 12px", textAlign: "right" }}>Total Amount</th>
-                    <th style={{ padding: "16px 12px", textAlign: "center" }}>Actions</th>
+                  <tr style={{ textAlign: "left", backgroundColor: "var(--bg-secondary)" }}>
+                    <th className="sticky-doc-col" style={{ padding: "16px 12px", borderBottom: "1px solid var(--border-color)" }}>Doc # / Reference</th>
+                    <th style={{ padding: "16px 12px", borderBottom: "1px solid var(--border-color)", whiteSpace: "nowrap" }}>Client</th>
+                    <th style={{ padding: "16px 12px", borderBottom: "1px solid var(--border-color)", whiteSpace: "nowrap" }}>Date</th>
+                    <th style={{ padding: "16px 12px", borderBottom: "1px solid var(--border-color)", whiteSpace: "nowrap" }}>Type</th>
+                    <th style={{ padding: "16px 12px", textAlign: "right", borderBottom: "1px solid var(--border-color)", whiteSpace: "nowrap" }}>Total Amount</th>
+                    <th style={{ padding: "16px 12px", textAlign: "center", borderBottom: "1px solid var(--border-color)", whiteSpace: "nowrap" }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -428,8 +428,8 @@ export default function Dashboard() {
                     const grand = Math.round(taxable + rowTax);
 
                     return (
-                      <tr key={inv.id} style={{ borderBottom: "1px solid var(--border-color)", transition: "background-color 0.2s" }} className="table-row-hover">
-                        <td style={{ padding: "16px 12px", fontWeight: "600" }}>
+                      <tr key={inv.id} className="table-row-hover">
+                        <td className="sticky-doc-col" style={{ padding: "16px 12px", fontWeight: "600", borderBottom: "1px solid var(--border-color)" }}>
                           {isQuotation ? (
                             <span title={(inv.quotation_ref_prefix || "").replace(/\/APD\//i, "/") + inv.invoice_number} style={{ fontFamily: "monospace", fontSize: "13px" }}>
                               {inv.quotation_ref_prefix ? `${inv.quotation_ref_prefix.replace(/\/APD\//i, "/")}${inv.invoice_number}` : `Q-#${inv.invoice_number}`}
@@ -451,11 +451,11 @@ export default function Dashboard() {
                             }}>🔄 Syncing</span>
                           )}
                         </td>
-                        <td style={{ padding: "16px 12px" }}>{inv.customer_name}</td>
-                        <td style={{ padding: "16px 12px", color: "var(--text-secondary)" }}>
+                        <td style={{ padding: "16px 12px", borderBottom: "1px solid var(--border-color)", whiteSpace: "nowrap" }}>{inv.customer_name}</td>
+                        <td style={{ padding: "16px 12px", color: "var(--text-secondary)", borderBottom: "1px solid var(--border-color)", whiteSpace: "nowrap" }}>
                           {new Date(inv.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
                         </td>
-                        <td style={{ padding: "16px 12px" }}>
+                        <td style={{ padding: "16px 12px", borderBottom: "1px solid var(--border-color)", whiteSpace: "nowrap" }}>
                           <span style={{
                             padding: "4px 10px",
                             borderRadius: "6px",
@@ -468,10 +468,10 @@ export default function Dashboard() {
                             {isQuotation ? "Quotation" : inv.template_type === "template2" ? "e-Invoice (Tax)" : "Icon Systems (GST)"}
                           </span>
                         </td>
-                        <td style={{ padding: "16px 12px", textAlign: "right", fontWeight: "700" }}>
+                        <td style={{ padding: "16px 12px", textAlign: "right", fontWeight: "700", borderBottom: "1px solid var(--border-color)", whiteSpace: "nowrap" }}>
                           ₹{grand.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
-                        <td style={{ padding: "16px 12px", textAlign: "center" }}>
+                        <td style={{ padding: "16px 12px", textAlign: "center", borderBottom: "1px solid var(--border-color)" }}>
                           <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
                             <Link to={`/invoices/view/${inv.id}`} title="View Details" style={{
                               padding: "6px",

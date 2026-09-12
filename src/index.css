@@ -660,6 +660,29 @@ button {
   }
 }
 
+/* Sticky Doc # / Reference column for horizontal scroll (mobile & desktop) */
+.sticky-doc-col {
+  position: sticky !important;
+  left: 0 !important;
+  background-color: var(--bg-secondary) !important;
+  box-shadow: 3px 0 8px -2px rgba(0, 0, 0, 0.45) !important;
+  white-space: nowrap !important;
+}
 
+th.sticky-doc-col {
+  z-index: 10 !important;
+}
 
+td.sticky-doc-col {
+  z-index: 5 !important;
+}
 
+.table-row-hover:hover td.sticky-doc-col {
+  filter: brightness(1.15);
+}
+
+@media (max-width: 640px) {
+  .dashboard-list-panel {
+    padding: 16px 8px !important;
+  }
+}
