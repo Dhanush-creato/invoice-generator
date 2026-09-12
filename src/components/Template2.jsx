@@ -11,11 +11,11 @@ export default function Template2({ invoiceData, orgData }) {
     invoice_number = "992",
     date = new Date().toISOString().split('t')[0],
     due_date = "",
-    customer_name = "Icon Systems",
-    customer_address = "No.01, 10th Cross, Vigneshwara Nagar, Sunkadakatte, Bengaluru Urban",
-    customer_gstin = "29ANUPR9033R1ZL",
-    customer_state = "Karnataka",
-    customer_state_code = "29",
+    customer_name = "",
+    customer_address = "",
+    customer_gstin = "",
+    customer_state = "",
+    customer_state_code = "",
     need_shipping = false,
     shipping_name = "",
     shipping_address = "",
@@ -117,15 +117,15 @@ export default function Template2({ invoiceData, orgData }) {
   const totalQty = items.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0);
 
   // Adjust heights and font sizes of Logistics grid based on whether shipping details are enabled (to keep height matching left side)
-  const rowMinHeight = need_shipping ? '38px' : '28px';
-  const termsMinHeight = need_shipping ? '60px' : '35px';
-  const cellPadding = need_shipping ? '4px 8px' : '2px 6px';
-  const labelFontSize = need_shipping ? '9px' : '8px';
-  const valFontSize = need_shipping ? '10.5px' : '9.5px';
+  const rowMinHeight  = need_shipping ? '34px' : '26px';
+  const termsMinHeight = need_shipping ? '50px' : '30px';
+  const cellPadding   = need_shipping ? '3px 6px' : '2px 6px';
+  const labelFontSize = need_shipping ? '11px' : '11px';
+  const valFontSize   = need_shipping ? '12.5px' : '12px';
 
   return (
-    <div className="invoice-preview-container" style={{ padding: '20px', background: '#fff', color: '#000' }}>
-      <div className="tax-invoice-deepam" style={{ border: '1px solid #000', fontSize: '11px', lineHeight: '1.3' }}>
+    <div className="invoice-preview-container" style={{ padding: '20px', background: '#fff', color: '#000', minHeight: '257mm', display: 'flex', flexDirection: 'column' }}>
+      <div className="tax-invoice-deepam" style={{ border: '1px solid #000', fontSize: '11px', lineHeight: '1.3', flex: 1, display: 'flex', flexDirection: 'column' }}>
         
         {/* Top Header Label */}
         <div style={{ display: 'flex', borderBottom: '1px solid #000', fontSize: '11px', fontWeight: 'bold' }}>
@@ -141,47 +141,47 @@ export default function Template2({ invoiceData, orgData }) {
             {/* Seller */}
             <div style={{ padding: '8px', borderBottom: '1px solid #000', minHeight: '90px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <div style={{ fontWeight: 'bold', fontSize: '15px' }}>{org.name}</div>
-                <div style={{ lineHeight: '1.3', fontSize: '10px' }}>
+                <div style={{ fontWeight: 'bold', fontSize: '15px', marginBottom: '3px' }}>{org.name}</div>
+                <div style={{ lineHeight: '1.35', fontSize: '10px', marginBottom: '5px' }}>
                   {org.address ? org.address.split(/[!\n]/).map((line, lIdx) => {
                     const trimmed = line.trim();
                     return trimmed ? <div key={lIdx}>{trimmed}</div> : null;
                   }) : null}
                 </div>
-                {org.phone && <div>PH NO-{org.phone}</div>}
-                <div><span style={{ fontWeight: 'bold' }}>GSTIN/UIN:</span> <span style={{ textTransform: 'uppercase' }}>{org.gstin}</span></div>
-                <div><span style={{ fontWeight: 'bold' }}>State Name:</span> Karnataka, Code : {org.state_code}</div>
+                {org.phone && <div style={{ marginBottom: '4px' }}>PH NO-{org.phone}</div>}
+                <div style={{ margin: '4px 0 3px' }}><span style={{ fontWeight: 'bold' }}>GSTIN/UIN:</span> <span style={{ textTransform: 'uppercase' }}>{org.gstin}</span></div>
+                <div style={{ margin: '3px 0 0' }}><span style={{ fontWeight: 'bold' }}>State Name:</span> Karnataka, Code : {org.state_code}</div>
               </div>
             </div>
 
             {/* Consignee (Ship to) */}
             {need_shipping && (
               <div style={{ padding: '8px', borderBottom: '1px solid #000', flexGrow: 1 }}>
-                <span style={{ fontWeight: 'bold', fontSize: '10px', textDecoration: 'underline' }}>Consignee (Ship to)</span>
-                <div style={{ fontWeight: 'bold', margin: '2px 0' }}>{shipping_name || customer_name}</div>
-                <div style={{ lineHeight: '1.3', fontSize: '10px' }}>
+                <span style={{ fontWeight: 'bold', fontSize: '10px', textDecoration: 'underline', display: 'block', marginBottom: '2px' }}>Consignee (Ship to)</span>
+                <div style={{ fontWeight: 'bold', margin: '2px 0 3px' }}>{shipping_name || customer_name}</div>
+                <div style={{ lineHeight: '1.35', fontSize: '10px', marginBottom: '5px' }}>
                   {(shipping_address || customer_address) ? (shipping_address || customer_address).split(/[!\n]/).map((line, lIdx) => {
                     const trimmed = line.trim();
                     return trimmed ? <div key={lIdx}>{trimmed}</div> : null;
                   }) : null}
                 </div>
-                <div><span style={{ fontWeight: 'bold' }}>GSTIN/UIN:</span> <span style={{ textTransform: 'uppercase' }}>{shipping_gstin || customer_gstin}</span></div>
-                <div><span style={{ fontWeight: 'bold' }}>State Name:</span> {shipping_state || customer_state}, Code : {shipping_state_code || customer_state_code}</div>
+                <div style={{ margin: '4px 0 3px' }}><span style={{ fontWeight: 'bold' }}>GSTIN/UIN:</span> <span style={{ textTransform: 'uppercase' }}>{shipping_gstin || customer_gstin}</span></div>
+                <div style={{ margin: '3px 0 0' }}><span style={{ fontWeight: 'bold' }}>State Name:</span> {shipping_state || customer_state}, Code : {shipping_state_code || customer_state_code}</div>
               </div>
             )}
 
             {/* Buyer (Bill to) */}
             <div style={{ padding: '8px', flexGrow: 1 }}>
-              <span style={{ fontWeight: 'bold', fontSize: '10px', textDecoration: 'underline' }}>Buyer (Bill to)</span>
-              <div style={{ fontWeight: 'bold', margin: '2px 0' }}>{customer_name}</div>
-              <div style={{ lineHeight: '1.3', fontSize: '10px' }}>
+              <span style={{ fontWeight: 'bold', fontSize: '10px', textDecoration: 'underline', display: 'block', marginBottom: '2px' }}>Buyer (Bill to)</span>
+              <div style={{ fontWeight: 'bold', margin: '2px 0 3px' }}>{customer_name}</div>
+              <div style={{ lineHeight: '1.35', fontSize: '10px', marginBottom: '5px' }}>
                 {customer_address ? customer_address.split(/[!\n]/).map((line, lIdx) => {
                   const trimmed = line.trim();
                   return trimmed ? <div key={lIdx}>{trimmed}</div> : null;
                 }) : null}
               </div>
-              <div><span style={{ fontWeight: 'bold' }}>GSTIN/UIN:</span> <span style={{ textTransform: 'uppercase' }}>{customer_gstin}</span></div>
-              <div><span style={{ fontWeight: 'bold' }}>State Name:</span> {customer_state}, Code : {customer_state_code}</div>
+              <div style={{ margin: '4px 0 3px' }}><span style={{ fontWeight: 'bold' }}>GSTIN/UIN:</span> <span style={{ textTransform: 'uppercase' }}>{customer_gstin}</span></div>
+              <div style={{ margin: '3px 0 0' }}><span style={{ fontWeight: 'bold' }}>State Name:</span> {customer_state}, Code : {customer_state_code}</div>
             </div>
             
           </div>
@@ -190,66 +190,66 @@ export default function Template2({ invoiceData, orgData }) {
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', fontSize: valFontSize }}>
             <div style={{ display: 'flex', borderBottom: '1px solid #000', minHeight: rowMinHeight }}>
               <div style={{ flex: 1, padding: cellPadding, borderRight: '1px solid #000' }}>
-                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Invoice No.</span>
+                <span style={{ color: '#000', display: 'block', fontSize: labelFontSize }}>Invoice No.</span>
                 <span style={{ fontWeight: 'bold' }}>{invoice_number}</span>
               </div>
               <div style={{ flex: 1, padding: cellPadding }}>
-                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Dated</span>
+                <span style={{ color: '#000', display: 'block', fontSize: labelFontSize }}>Dated</span>
                 <span style={{ fontWeight: 'bold' }}>{formatDate(date)}</span>
               </div>
             </div>
 
             <div style={{ display: 'flex', borderBottom: '1px solid #000', minHeight: rowMinHeight }}>
               <div style={{ flex: 1, padding: cellPadding, borderRight: '1px solid #000' }}>
-                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Delivery Note</span>
+                <span style={{ color: '#000', display: 'block', fontSize: labelFontSize }}>Delivery Note</span>
                 <span>{delivery_note || "N/A"}</span>
               </div>
               <div style={{ flex: 1, padding: cellPadding }}>
-                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Mode/Terms of Payment</span>
+                <span style={{ color: '#000', display: 'block', fontSize: labelFontSize }}>Mode/Terms of Payment</span>
                 <span>{payment_mode}</span>
               </div>
             </div>
 
             <div style={{ display: 'flex', borderBottom: '1px solid #000', minHeight: rowMinHeight }}>
               <div style={{ flex: 1, padding: cellPadding, borderRight: '1px solid #000' }}>
-                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Reference No. & Date.</span>
+                <span style={{ color: '#000', display: 'block', fontSize: labelFontSize }}>Reference No. & Date.</span>
                 <span>{ref_no_date || "N/A"}</span>
               </div>
               <div style={{ flex: 1, padding: cellPadding }}>
-                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Other References</span>
+                <span style={{ color: '#000', display: 'block', fontSize: labelFontSize }}>Other References</span>
                 <span>{other_references || "N/A"}</span>
               </div>
             </div>
 
             <div style={{ display: 'flex', borderBottom: '1px solid #000', minHeight: rowMinHeight }}>
               <div style={{ flex: 1, padding: cellPadding, borderRight: '1px solid #000' }}>
-                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Buyer's Order No.</span>
+                <span style={{ color: '#000', display: 'block', fontSize: labelFontSize }}>Buyer's Order No.</span>
                 <span>{buyer_order_no || "N/A"}</span>
               </div>
               <div style={{ flex: 1, padding: cellPadding }}>
-                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Dated</span>
+                <span style={{ color: '#000', display: 'block', fontSize: labelFontSize }}>Dated</span>
                 <span>{buyer_order_date ? formatDate(buyer_order_date) : "N/A"}</span>
               </div>
             </div>
 
             <div style={{ display: 'flex', borderBottom: '1px solid #000', minHeight: rowMinHeight }}>
               <div style={{ flex: 1, padding: cellPadding, borderRight: '1px solid #000' }}>
-                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Dispatch Doc No.</span>
+                <span style={{ color: '#000', display: 'block', fontSize: labelFontSize }}>Dispatch Doc No.</span>
                 <span>{dispatch_doc_no || "N/A"}</span>
               </div>
               <div style={{ flex: 1, padding: cellPadding }}>
-                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Delivery Note Date</span>
+                <span style={{ color: '#000', display: 'block', fontSize: labelFontSize }}>Delivery Note Date</span>
                 <span>{dispatch_doc_date ? formatDate(dispatch_doc_date) : "N/A"}</span>
               </div>
             </div>
 
             <div style={{ display: 'flex', borderBottom: '1px solid #000', minHeight: rowMinHeight }}>
               <div style={{ flex: 1, padding: cellPadding, borderRight: '1px solid #000' }}>
-                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Dispatched through</span>
+                <span style={{ color: '#000', display: 'block', fontSize: labelFontSize }}>Dispatched through</span>
                 <span>{dispatched_through || "N/A"}</span>
               </div>
               <div style={{ flex: 1, padding: cellPadding }}>
-                <span style={{ color: '#555', display: 'block', fontSize: labelFontSize }}>Destination</span>
+                <span style={{ color: '#000', display: 'block', fontSize: labelFontSize }}>Destination</span>
                 <span>{destination || "N/A"}</span>
               </div>
             </div>
@@ -261,8 +261,9 @@ export default function Template2({ invoiceData, orgData }) {
           </div>
         </div>
 
-        {/* Product Items Table */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', borderBottom: '1px solid #000' }}>
+        {/* Product Items Table — flex:1 makes this grow to fill remaining A4 space */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', borderBottom: '1px solid #000', flex: 1 }}>
           <thead>
             <tr style={{ height: '24px' }}>
               <th style={{ width: '4%', borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px', textAlign: 'center' }}>Sl No.</th>
@@ -356,6 +357,7 @@ export default function Template2({ invoiceData, orgData }) {
             </tr>
           </tbody>
         </table>
+        </div>
 
         {/* Taxable Amount In Words */}
         <div style={{ padding: '6px 8px', borderBottom: '1px solid #000', fontSize: '11px' }}>
@@ -366,32 +368,22 @@ export default function Template2({ invoiceData, orgData }) {
         {/* GST Tax Summary Table in Box Format (Single-row, no HSN) */}
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', borderBottom: '1px solid #000', textAlign: 'center' }}>
           <thead>
-            <tr style={{ background: '#eee', fontWeight: 'bold' }}>
-              <th rowSpan={2} style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px' }}>Taxable Value</th>
+            <tr style={{ background: '#eee', fontWeight: 'bold', height: '26px' }}>
+              <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px', width: '20%', verticalAlign: 'middle' }}>Taxable Value</th>
               {!is_interstate ? (
                 <>
-                  <th colSpan={2} style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>Central Tax</th>
-                  <th colSpan={2} style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>State Tax</th>
-                </>
-              ) : (
-                <th colSpan={2} style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>Integrated Tax</th>
-              )}
-              <th rowSpan={2} style={{ borderBottom: '1px solid #000', padding: '6px 4px' }}>Total Tax Amount</th>
-            </tr>
-            <tr style={{ background: '#eee', fontWeight: 'bold' }}>
-              {!is_interstate ? (
-                <>
-                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>Rate</th>
-                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>Amount</th>
-                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>Rate</th>
-                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>Amount</th>
+                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px', width: '12%', verticalAlign: 'middle' }}>CGST Rate</th>
+                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px', width: '16%', verticalAlign: 'middle' }}>CGST Amount</th>
+                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px', width: '12%', verticalAlign: 'middle' }}>SGST Rate</th>
+                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px', width: '16%', verticalAlign: 'middle' }}>SGST Amount</th>
                 </>
               ) : (
                 <>
-                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>Rate</th>
-                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '4px' }}>Amount</th>
+                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px', width: '25%', verticalAlign: 'middle' }}>IGST Rate</th>
+                  <th style={{ borderRight: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 4px', width: '30%', verticalAlign: 'middle' }}>IGST Amount</th>
                 </>
               )}
+              <th style={{ borderBottom: '1px solid #000', padding: '6px 4px', width: '24%', verticalAlign: 'middle' }}>Total Tax Amount</th>
             </tr>
           </thead>
           <tbody>
@@ -422,33 +414,33 @@ export default function Template2({ invoiceData, orgData }) {
         </div>
 
         {/* Bottom Declarations, Bank & Signature Section */}
-        <div style={{ display: 'flex', minHeight: '135px' }}>
+        <div style={{ display: 'flex', minHeight: '160px' }}>
           {/* Declarations & Bank */}
           <div style={{ flex: 1.2, borderRight: '1px solid #000', padding: '6px 8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div>
-              <span style={{ fontWeight: 'bold', textDecoration: 'underline', display: 'block', fontSize: '9px', marginBottom: '2px' }}>Declaration:</span>
-              <p style={{ fontSize: '9px', color: '#333' }}>We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.</p>
+              <span style={{ fontWeight: 'bold', textDecoration: 'underline', display: 'block', fontSize: '12px', marginBottom: '2px' }}>Declaration:</span>
+              <p style={{ fontSize: '12px', color: '#000' }}>We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.</p>
             </div>
             
             {/* Bank details */}
-            <div style={{ fontSize: '9.5px', marginTop: 'auto', borderTop: '1px dashed #ccc', paddingTop: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '15px' }}>
+            <div style={{ fontSize: '12px', marginTop: 'auto', borderTop: '1px dashed #ccc', paddingTop: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '15px' }}>
               <div style={{ flex: 1 }}>
                 <span style={{ fontWeight: 'bold', display: 'block', textDecoration: 'underline', marginBottom: '2px' }}>Company's Bank Details:</span>
                 <div style={{ display: 'flex' }}>
-                  <div style={{ width: '120px' }}>A/c Holder's Name:</div>
+                  <div style={{ width: '140px' }}>A/c Holder's Name:</div>
                   <div style={{ fontWeight: 'bold' }}>{org.name}</div>
                 </div>
                 <div style={{ display: 'flex' }}>
-                  <div style={{ width: '120px' }}>Bank Name:</div>
+                  <div style={{ width: '140px' }}>Bank Name:</div>
                   <div style={{ fontWeight: 'bold' }}>{displayBankName}</div>
                 </div>
                 <div style={{ display: 'flex' }}>
-                  <div style={{ width: '120px' }}>A/c No:</div>
+                  <div style={{ width: '140px' }}>A/c No:</div>
                   <div style={{ fontWeight: 'bold' }}>{displayBankAccNo}</div>
                 </div>
                 <div style={{ display: 'flex' }}>
-                  <div style={{ width: '120px' }}>Branch & IFS Code:</div>
-                  <div style={{ fontWeight: 'bold' }}>{displayBankBranch} & {displayBankIfsc}</div>
+                  <div style={{ width: '140px' }}>Branch &amp; IFS Code:</div>
+                  <div style={{ fontWeight: 'bold' }}>{displayBankBranch} &amp; {displayBankIfsc}</div>
                 </div>
               </div>
 
@@ -463,18 +455,18 @@ export default function Template2({ invoiceData, orgData }) {
 
           {/* Authorised Signatory */}
           <div style={{ flex: 0.8, padding: '6px 8px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-end', position: 'relative' }}>
-            <div style={{ fontSize: '13px', fontWeight: 'bold' }}>for {org.name}</div>
+            <div style={{ fontSize: '14px', fontWeight: 'bold' }}>for {org.name}</div>
             
             {org.signature_url && (
               <img src={org.signature_url} alt="Authorized Signature" className="invoice-signature" style={{ maxHeight: '55px', position: 'absolute', bottom: '25px', right: '25px', opacity: 0.9 }} />
             )}
             
-            <div style={{ marginTop: 'auto', fontWeight: 'bold', fontSize: '10px' }}>Authorised Signatory</div>
+            <div style={{ marginTop: 'auto', fontWeight: 'bold', fontSize: '12px' }}>Authorised Signatory</div>
           </div>
         </div>
 
         {/* Footer text */}
-        <div style={{ borderTop: '1px solid #000', padding: '4px', textAlign: 'center', fontSize: '9px', fontWeight: 'bold' }}>
+        <div style={{ borderTop: '1px solid #000', padding: '6px', textAlign: 'center', fontSize: '11px', fontWeight: 'bold' }}>
           This is a Computer Generated Invoice
         </div>
 

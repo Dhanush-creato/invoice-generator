@@ -1,0 +1,42 @@
+- [x] Create QuotationTemplate component (`src/components/QuotationTemplate.jsx`)
+- [x] Add Quotation fields to `InvoiceEditor.jsx` (state, UI form, payload saving, payload loading)
+- [x] Render `QuotationTemplate` in `InvoiceEditor.jsx` preview and hidden PDF target
+- [x] Render `QuotationTemplate` in `InvoiceDetails.jsx` and `PublicInvoice.jsx`
+- [x] Implement `!` separator for customer address lines in QuotationTemplate
+- [x] Render blue social-handles footer block at the bottom of QuotationTemplate
+- [x] Optimize spacing and remove duplicate 'Thanking you' to avoid footer overlapping
+- [x] Correct blue footer nesting so it aligns at the very bottom edge (matching Template 1)
+- [x] Remove Storage config from `firebase.json` for Spark (Free) plan compatibility
+- [x] Change default Quotation Prefix year to `2026-27/` (`ICS/AWLC/Q/APD/2026-27/`)
+- [x] Replace "Invoice Number/Date" inputs with "Quotation Number/Date" when Quotation is selected
+- [x] Automatically separate invoice sequence (starts 391) and quotation sequence (starts 1) for new creations
+- [x] Make Cable term optional with a checkbox switch in the editor form (shown/hidden dynamically)
+- [x] Remove "Ramesh Cell: 9844619215" signature label from the Quotation Template
+- [x] Align "Total in words" block to the bottom of the table row
+- [x] Position "Thanking you" directly below the "In anticipation we look forward to receive your order" text line
+- [x] Add bold, underlined "TERMS & CONDITIONS" heading above the guarantee, validity, and cable items
+- [x] Make Payment term optional with checkbox input (default: `Advance 50% after installation 100% payment`)
+- [x] Implement dynamic list rendering for sequential numbering of active Terms & Conditions
+- [x] Remove duplicate "TERMS & CONDITIONS" subheading from directly above the Particulars table
+- [x] Make Note term optional with checkbox input (default empty string)
+- [x] Fix the tax summary table header layout rendering clipping bug in Template 2
+- [x] Fix mobile PDF canvas rendering (`windowWidth: 794` & viewport-aligned target)
+- [x] Remove e-Invoice QR code block from `QuotationTemplate.jsx` and `Template1.jsx`
+- [x] Enlarge "Save Water" seal logo from `95px` to `125px` in template headers
+- [x] Dynamic page titles: "Create New Quotation" / "Edit Quotation" vs "Create New Invoice" / "Edit Invoice"
+- [x] Dynamic save button labels: "Save Quotation" vs "Save Invoice"
+- [x] Instant sequence number switching when toggling between Quotation and Invoice templates
+- [x] Added "Create Quotation" link directly to the left Sidebar navigation menu
+- [x] Exclude Quotation amounts from Dashboard Taxable Sales, GST Collected, and Gross Receipts totals
+- [x] Instant 0ms localStorage caching of Quotation and Invoice sequence numbers so numbers load instantly on click
+- [x] Set full paper height `297mm` and `windowHeight: 1123` so blue footer sits flush against bottom edge with zero white gap
+- [x] Replaced unaligned spaces in Terms & Conditions with a structured 3-column flex grid so colons (`:`) and text align vertically
+- [x] Reduced Terms & Conditions label width from `110px` to `85px` to remove excess empty space before colon
+- [x] Hide Note row automatically if note text is empty to prevent blank `05. Note :`
+- [x] Updated mobile bottom sticky bar save button to display "Save Quotation" when creating/editing a quotation
+- [x] Set Save Water seal logo dimensions to 98px x 98px with strict aspectRatio 1/1 so seal is prominent and stays perfectly circular on download
+- [x] Integrated Google Identity Services script in `index.html`
+- [x] Created `src/utils/driveUpload.js` module using OAuth Client ID `382982231043-48fcpsua9s3gi9bkboe9c891bqqh1noa.apps.googleusercontent.com`
+- [x] Added "Save to Drive" action buttons to `InvoiceDetails.jsx` and `PublicInvoice.jsx` (after saving)
+- [x] Removed "Save to Drive" button from `InvoiceEditor.jsx` during creation/editing as requested
+- [x] Automated Google Drive folder creation: Invoices saved into `ICON Invoices` folder, Quotations saved into `ICON Quotations` folder

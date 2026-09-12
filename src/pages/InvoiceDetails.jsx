@@ -7,8 +7,10 @@ import Header from "../components/Header";
 import Template1 from "../components/Template1";
 import Template2 from "../components/Template2";
 import Template3 from "../components/Template3";
-import html2pdf from "html2pdf.js";
-import { ArrowLeft, Edit, Printer, Download, Share2, Copy, Check, Loader, AlertCircle } from "lucide-react";
+import QuotationTemplate from "../components/QuotationTemplate";
+import { downloadPdf, generatePdfBlob } from "../utils/pdfUtils";
+import { ArrowLeft, Edit, Printer, Download, Share2, Copy, Check, Loader, AlertCircle, CloudUpload } from "lucide-react";
+import { initDriveAuth, uploadPdfToDrive } from "../utils/driveUpload";
 
 export default function InvoiceDetails() {
   const { id } = useParams();
@@ -18,6 +20,11 @@ export default function InvoiceDetails() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
+  const [uploadingDrive, setUploadingDrive] = useState(false);
+
+  useEffect(() => {
+    initDriveAuth();
+  }, []);
 
   useEffect(() => {
     const fetchInvoiceAndProfile = async () => {
@@ -56,19 +63,35 @@ export default function InvoiceDetails() {
     window.print();
   };
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     const element = document.querySelector(".invoice-preview-container");
-    if (!element) return;
+    if (!element || !invoice) return;
+    const isQuotation = invoice.template_type === "quotation";
+    const custName = (invoice.customer_name || "").replace(/\s+/g, '_');
+    const filename = `${isQuotation ? "Quotation" : "Invoice"}_${invoice.invoice_number}${custName ? `_${custName}` : ""}.pdf`;
+    await downloadPdf(element, filename);
+  };
 
-    const opt = {
-      margin:       0,
-      filename:     `Invoice_${invoice.invoice_number}_${invoice.customer_name.replace(/\s+/g, '_')}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2.5, useCORS: true, letterRendering: true },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
+  const handleUploadToDrive = async () => {
+    const element = document.querySelector(".invoice-preview-container");
+    if (!element || !invoice) return;
+    setUploadingDrive(true);
+    try {
+      const isQuotation = invoice.template_type === "quotation";
+      const fileName = `${isQuotation ? "Quotation" : "Invoice"}_${invoice.invoice_number}_${(invoice.customer_name || "").replace(/\s+/g, '_')}.pdf`;
+      const pdfBlob = await generatePdfBlob(element, fileName);
 
-    html2pdf().from(element).set(opt).save();
+      const result = await uploadPdfToDrive(pdfBlob, fileName, isQuotation);
+      alert(`Uploaded to Google Drive in folder 'ICON ${isQuotation ? "Quotations" : "Invoices"}'!\nView file: ${result.webViewLink}`);
+      if (result && result.webViewLink) {
+        window.open(result.webViewLink, "_blank");
+      }
+    } catch (err) {
+      console.error("Google Drive upload failed:", err);
+      alert(`Google Drive upload failed: ${err.message || "Consent canceled"}`);
+    } finally {
+      setUploadingDrive(false);
+    }
   };
 
   const shareUrl = `${window.location.origin}/public/invoice/${id}`;
@@ -116,7 +139,9 @@ export default function InvoiceDetails() {
             <button onClick={() => navigate("/")} style={{ padding: "8px", borderRadius: "8px", backgroundColor: "var(--card-bg)", color: "var(--text-primary)" }}>
               <ArrowLeft size={18} />
             </button>
-            <h1 style={{ fontSize: "24px", fontWeight: "700" }}>Invoice #{invoice.invoice_number}</h1>
+            <h1 style={{ fontSize: "24px", fontWeight: "700" }}>
+              {invoice.template_type === "quotation" ? "Quotation" : "Invoice"} #{invoice.invoice_number}
+            </h1>
           </div>
 
           <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
@@ -156,6 +181,31 @@ export default function InvoiceDetails() {
               Edit
             </Link>
 
+            {/* Google Drive Upload button */}
+            <button
+              type="button"
+              onClick={handleUploadToDrive}
+              disabled={uploadingDrive}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "10px 16px",
+                borderRadius: "8px",
+                backgroundColor: "rgba(16, 185, 129, 0.15)",
+                border: "1px solid rgba(16, 185, 129, 0.4)",
+                color: "#10b981",
+                fontSize: "14px",
+                fontWeight: "600",
+                cursor: "pointer",
+                opacity: uploadingDrive ? 0.7 : 1
+              }}
+              title="Upload PDF directly to your Google Drive"
+            >
+              {uploadingDrive ? <Loader className="animate-spin" size={16} /> : <CloudUpload size={16} />}
+              {uploadingDrive ? "Uploading..." : "Save to Drive"}
+            </button>
+
             {/* Download PDF button */}
             <button onClick={handleDownloadPdf} style={{
               display: "flex",
@@ -170,7 +220,7 @@ export default function InvoiceDetails() {
               boxShadow: "0 4px 10px 0 rgba(59, 130, 246, 0.2)"
             }}>
               <Download size={16} />
-              Download PDF
+              {invoice.template_type === "quotation" ? "Download Quotation" : "Download PDF"}
             </button>
           </div>
         </div>
@@ -211,6 +261,8 @@ export default function InvoiceDetails() {
                   <Template1 invoiceData={invoice} orgData={orgDataWithPhone} />
                 ) : invoice.template_type === "template3" ? (
                   <Template3 invoiceData={invoice} orgData={orgDataWithPhone} />
+                ) : invoice.template_type === "quotation" ? (
+                  <QuotationTemplate invoiceData={invoice} orgData={orgDataWithPhone} />
                 ) : (
                   <Template2 invoiceData={invoice} orgData={orgDataWithPhone} />
                 );

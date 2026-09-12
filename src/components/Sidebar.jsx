@@ -36,6 +36,7 @@ export default function Sidebar({ userProfile }) {
   const menuItems = [
     { name: "Dashboard", path: "/", icon: <LayoutDashboard size={20} /> },
     { name: "Create Invoice", path: "/invoices/new", icon: <PlusCircle size={20} /> },
+    { name: "Create Quotation", path: "/invoices/new?type=quotation", icon: <Receipt size={20} /> },
     { name: "Manage Items", path: "/items", icon: <Tag size={20} /> },
     { name: "Org Profile Settings", path: "/settings", icon: <Settings size={20} /> },
   ];
@@ -162,7 +163,8 @@ export default function Sidebar({ userProfile }) {
           overflowY: "auto",
         }}>
           {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
+            const currentFullPath = location.pathname + location.search;
+            const isActive = currentFullPath === item.path || (item.path === "/invoices/new" && location.pathname === "/invoices/new" && !location.search);
             return (
               <Link
                 key={item.name}

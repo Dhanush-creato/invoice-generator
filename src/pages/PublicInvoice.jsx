@@ -5,9 +5,11 @@ import { doc, getDoc } from "firebase/firestore";
 import Template1 from "../components/Template1";
 import Template2 from "../components/Template2";
 import Template3 from "../components/Template3";
-import html2pdf from "html2pdf.js";
-import { Download, Printer, Loader, AlertCircle } from "lucide-react";
+import QuotationTemplate from "../components/QuotationTemplate";
+import { downloadPdf, generatePdfBlob } from "../utils/pdfUtils";
+import { Download, Printer, Loader, AlertCircle, CloudUpload } from "lucide-react";
 import { getRealInvoiceId } from "../utils/crypto";
+import { initDriveAuth, uploadPdfToDrive } from "../utils/driveUpload";
 
 export default function PublicInvoice() {
   const { id } = useParams();
@@ -19,6 +21,11 @@ export default function PublicInvoice() {
   const [showFullPreview, setShowFullPreview] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [downloadStarted, setDownloadStarted] = useState(false);
+  const [uploadingDrive, setUploadingDrive] = useState(false);
+
+  useEffect(() => {
+    initDriveAuth();
+  }, []);
 
   useEffect(() => {
     const fetchPublicData = async () => {
@@ -64,30 +71,42 @@ export default function PublicInvoice() {
     window.print();
   };
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     const element = document.querySelector(".invoice-preview-container");
-    if (!element) {
-      setDownloading(false);
-      return;
-    }
-
-    const opt = {
-      margin:       0,
-      filename:     `Invoice_${invoice.invoice_number}_${invoice.customer_name.replace(/\s+/g, '_')}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2.5, useCORS: true, letterRendering: true },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
+    if (!element || !invoice) return;
     setDownloading(true);
-    html2pdf().from(element).set(opt).save()
-      .then(() => {
-        setDownloading(false);
-      })
-      .catch((err) => {
-        console.error("PDF generation failed:", err);
-        setDownloading(false);
-      });
+    try {
+      const isQuotation = invoice.template_type === "quotation";
+      const custName = (invoice.customer_name || "").replace(/\s+/g, '_');
+      const filename = `${isQuotation ? "Quotation" : "Invoice"}_${invoice.invoice_number}${custName ? `_${custName}` : ""}.pdf`;
+      await downloadPdf(element, filename);
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleUploadToDrive = async () => {
+    const element = document.querySelector(".invoice-preview-container");
+    if (!element || !invoice) return;
+    setUploadingDrive(true);
+    try {
+      const isQuotation = invoice.template_type === "quotation";
+      const fileName = `${isQuotation ? "Quotation" : "Invoice"}_${invoice.invoice_number}_${(invoice.customer_name || "").replace(/\s+/g, '_')}.pdf`;
+      const pdfBlob = await generatePdfBlob(element, fileName);
+
+      const result = await uploadPdfToDrive(pdfBlob, fileName, isQuotation);
+      alert(`Uploaded to Google Drive in folder 'ICON ${isQuotation ? "Quotations" : "Invoices"}'!\nView file: ${result.webViewLink}`);
+      if (result && result.webViewLink) {
+        window.open(result.webViewLink, "_blank");
+      }
+    } catch (err) {
+      console.error("Google Drive upload failed:", err);
+      alert(`Google Drive upload failed: ${err.message || "Authorization canceled"}`);
+    } finally {
+      setUploadingDrive(false);
+    }
   };
 
   if (loading) {
@@ -98,12 +117,12 @@ export default function PublicInvoice() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#f5f7fb",
-        color: "#1e293b",
+        backgroundColor: "var(--bg-primary)",
+        color: "var(--text-primary)",
         gap: "12px"
       }}>
-        <div style={{ width: "24px", height: "24px", border: "3px solid #2563eb", borderTopColor: "transparent", borderRadius: "50%" }} className="animate-spin"></div>
-        <span style={{ fontSize: "14px", fontWeight: "600" }}>Fetching public invoice details...</span>
+        <Loader className="animate-spin" size={32} />
+        <span>Loading invoice...</span>
       </div>
     );
   }
@@ -166,6 +185,8 @@ export default function PublicInvoice() {
           <Template1 invoiceData={invoice} orgData={profile} />
         ) : invoice.template_type === "template3" ? (
           <Template3 invoiceData={invoice} orgData={profile} />
+        ) : invoice.template_type === "quotation" ? (
+          <QuotationTemplate invoiceData={invoice} orgData={profile} />
         ) : (
           <Template2 invoiceData={invoice} orgData={profile} />
         )}
@@ -208,14 +229,39 @@ export default function PublicInvoice() {
             </div>
             
             <h2 style={{ fontSize: "22px", fontWeight: "800", color: "#1e293b", marginBottom: "8px" }}>
-              Invoice Downloaded!
+              {invoice.template_type === "quotation" ? "Quotation" : "Invoice"} Downloaded!
             </h2>
             
             <p style={{ fontSize: "14px", color: "#64748b", lineHeight: "1.5", marginBottom: "28px" }}>
-              PDF for Invoice <strong>#{invoice.invoice_number}</strong> from <strong>{profile?.name || "the seller"}</strong> has been saved directly to your device.
+              PDF for {invoice.template_type === "quotation" ? "Quotation" : "Invoice"} <strong>#{invoice.invoice_number}</strong> from <strong>{profile?.name || "the seller"}</strong> has been saved directly to your device.
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}>
+              <button
+                type="button"
+                onClick={handleUploadToDrive}
+                disabled={uploadingDrive}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: "8px",
+                  backgroundColor: "rgba(16, 185, 129, 0.15)",
+                  border: "1px solid rgba(16, 185, 129, 0.4)",
+                  color: "#10b981",
+                  fontWeight: "600",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  opacity: uploadingDrive ? 0.7 : 1
+                }}
+              >
+                {uploadingDrive ? <Loader className="animate-spin" size={16} /> : <CloudUpload size={16} />}
+                {uploadingDrive ? "Uploading to Drive..." : "☁️ Save to Google Drive"}
+              </button>
+
               <button
                 onClick={handleDownloadPdf}
                 style={{
@@ -299,7 +345,9 @@ export default function PublicInvoice() {
               </button>
               <div>
                 <span style={{ fontWeight: "700", fontSize: "14px", color: "#1e293b", display: "block" }}>{profile?.name}</span>
-                <span style={{ fontSize: "11px", color: "#64748b" }}>Invoice #{invoice.invoice_number}</span>
+                <span style={{ fontSize: "11px", color: "#64748b" }}>
+                  {invoice.template_type === "quotation" ? "Quotation" : "Invoice"} #{invoice.invoice_number}
+                </span>
               </div>
             </div>
 
@@ -322,7 +370,7 @@ export default function PublicInvoice() {
                 }}
               >
                 <Download size={15} />
-                Download PDF
+                {invoice.template_type === "quotation" ? "Download Quotation" : "Download PDF"}
               </button>
             </div>
           </div>
@@ -335,6 +383,8 @@ export default function PublicInvoice() {
                   <Template1 invoiceData={invoice} orgData={profile} />
                 ) : invoice.template_type === "template3" ? (
                   <Template3 invoiceData={invoice} orgData={profile} />
+                ) : invoice.template_type === "quotation" ? (
+                  <QuotationTemplate invoiceData={invoice} orgData={profile} />
                 ) : (
                   <Template2 invoiceData={invoice} orgData={profile} />
                 )}

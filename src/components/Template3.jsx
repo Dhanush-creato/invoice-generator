@@ -3,7 +3,7 @@ import React from 'react';
 export default function Template3({ invoiceData, orgData }) {
   const org = orgData || {};
   const {
-    invoice_number = "",
+    invoice_number = "447",
     date = "",
     customer_name = "",
     customer_address = "",
@@ -137,10 +137,11 @@ export default function Template3({ invoiceData, orgData }) {
       color: '#000',
       fontFamily: 'Arial, sans-serif',
       fontSize: '11px',
-      minHeight: '297mm',
       height: '297mm',
+      maxHeight: '297mm',
       boxSizing: 'border-box',
-      position: 'relative'
+      position: 'relative',
+      overflow: 'hidden'
     }}>
       
       {/* 1. Print spacer to leave space for pre-printed letterhead header */}
@@ -333,59 +334,59 @@ export default function Template3({ invoiceData, orgData }) {
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Bank & Signature Section */}
-        <div style={{ display: 'flex', borderTop: '2px solid #000', marginTop: '1px', fontSize: '11px', minHeight: '155px' }}>
-          {/* Bank Details (Removed borderRight to eliminate vertical center liner) */}
-          <div style={{ flex: 1.2, padding: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '15px' }}>
-            <div style={{ flex: 1 }}>
-              {notes && (
-                <div style={{ marginBottom: '8px', fontSize: '10px', lineHeight: '1.4' }}>
-                  <span style={{ fontWeight: 'bold' }}>Note: </span>{notes}
+          {/* Bank & Signature Section */}
+          <div style={{ display: 'flex', borderTop: '2px solid #000', marginTop: '1px', fontSize: '11px', minHeight: '155px' }}>
+            {/* Bank Details (Removed borderRight to eliminate vertical center liner) */}
+            <div style={{ flex: 1.2, padding: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '15px' }}>
+              <div style={{ flex: 1 }}>
+                {notes && (
+                  <div style={{ marginBottom: '8px', fontSize: '10px', lineHeight: '1.4' }}>
+                    <span style={{ fontWeight: 'bold' }}>Note: </span>{notes}
+                  </div>
+                )}
+                <span style={{ fontWeight: 'bold', textDecoration: 'underline', display: 'block', marginBottom: '4px' }}>Bank Details :</span>
+                <div><span style={{ fontWeight: 'bold' }}>Bank Name : </span>{displayBankName}</div>
+                <div><span style={{ fontWeight: 'bold' }}>Branch : </span>{displayBankBranch}</div>
+                <div><span style={{ fontWeight: 'bold' }}>Account no : </span>{displayBankAccNo} <span style={{ fontWeight: 'bold' }}>({displayBankAccType})</span></div>
+                <div><span style={{ fontWeight: 'bold' }}>IFSC Code : </span><span style={{ textTransform: 'uppercase' }}>{displayBankIfsc}</span></div>
+              </div>
+
+              {org.phonepe_url && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: '10px', flexShrink: 0 }}>
+                  <img src={org.phonepe_url} alt="Payment QR" style={{ width: '85px', height: '85px', objectFit: 'contain', border: '1px solid #ddd', padding: '2px', borderRadius: '4px', background: '#fff' }} />
+                  <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#555', marginTop: '4px' }}>Payment Scanner</span>
                 </div>
               )}
-              <span style={{ fontWeight: 'bold', textDecoration: 'underline', display: 'block', marginBottom: '4px' }}>Bank Details :</span>
-              <div><span style={{ fontWeight: 'bold' }}>Bank Name : </span>{displayBankName}</div>
-              <div><span style={{ fontWeight: 'bold' }}>Branch : </span>{displayBankBranch}</div>
-              <div><span style={{ fontWeight: 'bold' }}>Account no : </span>{displayBankAccNo} <span style={{ fontWeight: 'bold' }}>({displayBankAccType})</span></div>
-              <div><span style={{ fontWeight: 'bold' }}>IFSC Code : </span><span style={{ textTransform: 'uppercase' }}>{displayBankIfsc}</span></div>
             </div>
-
-            {org.phonepe_url && (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: '10px', flexShrink: 0 }}>
-                <img src={org.phonepe_url} alt="Payment QR" style={{ width: '85px', height: '85px', objectFit: 'contain', border: '1px solid #ddd', padding: '2px', borderRadius: '4px', background: '#fff' }} />
-                <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#555', marginTop: '4px' }}>Payment Scanner</span>
-              </div>
-            )}
+            {/* Authorised Signature */}
+            <div style={{ flex: 0.8, padding: '8px 8px 15px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
+              <div style={{ fontWeight: 'bold', fontSize: '13px' }}>For {org.name}</div>
+              
+              {/* Signature image if uploaded in settings */}
+              {org.signature_url && (
+                <img src={org.signature_url} alt="Signature Stamp" className="invoice-signature" style={{ maxHeight: '55px', position: 'absolute', top: '25px', opacity: 0.85 }} />
+              )}
+              
+              <div style={{ fontWeight: 'bold', marginTop: 'auto', textAlign: 'center', fontSize: '9.5px' }}>Proprietor</div>
+            </div>
           </div>
-          {/* Authorised Signature */}
-          <div style={{ flex: 0.8, padding: '8px 8px 15px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
-            <div style={{ fontWeight: 'bold', fontSize: '13px' }}>For {org.name}</div>
-            
-            {/* Signature image if uploaded in settings */}
-            {org.signature_url && (
-              <img src={org.signature_url} alt="Signature Stamp" className="invoice-signature" style={{ maxHeight: '55px', position: 'absolute', top: '25px', opacity: 0.85 }} />
-            )}
-            
-            <div style={{ fontWeight: 'bold', marginTop: 'auto', textAlign: 'center', fontSize: '9.5px' }}>Proprietor</div>
+
+          {/* Sub-footer notices */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            borderTop: '1px solid #000',
+            padding: '6px 8px',
+            fontSize: '10px',
+            fontWeight: 'bold',
+            background: '#fcfcfc'
+          }}>
+            <div>This is computerised invoice not required receiver sign</div>
+            <div>Thank you for your Business</div>
           </div>
-        </div>
 
-        {/* Sub-footer notices */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          borderTop: '1px solid #000',
-          padding: '6px 8px',
-          fontSize: '10px',
-          fontWeight: 'bold',
-          background: '#fcfcfc'
-        }}>
-          <div>This is computerised invoice not required receiver sign</div>
-          <div>Thank you for your Business</div>
         </div>
-
       </div>
 
       {/* 2. Print spacer to leave space for pre-printed letterhead footer */}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { db, auth, storage } from "../firebase";
 import { doc, getDoc, getDocFromCache, setDoc, addDoc, collection, getDocs, getDocsFromCache, query, where } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -8,17 +8,60 @@ import Header from "../components/Header";
 import Template1 from "../components/Template1";
 import Template2 from "../components/Template2";
 import Template3 from "../components/Template3";
-import html2pdf from "html2pdf.js";
+import QuotationTemplate from "../components/QuotationTemplate";
 import Toast from "../components/Toast";
-import { Save, Plus, Trash2, ArrowLeft, Loader, Users, FileText, Settings, AlertCircle, Percent, PlusCircle, MinusCircle, Download } from "lucide-react";
+import { Save, Plus, Trash2, ArrowLeft, Loader, Users, FileText, Settings, AlertCircle, Percent, PlusCircle, MinusCircle, Download, CloudUpload } from "lucide-react";
+import { initDriveAuth, uploadPdfToDrive } from "../utils/driveUpload";
+import { downloadPdf, generatePdfBlob } from "../utils/pdfUtils";
+
 
 // localStorage keys for offline caching
-const LS_ITEMS_KEY   = "iconsys_cached_items";
-const LS_DEALERS_KEY = "iconsys_cached_dealers";
-const LS_INV_COUNT   = "iconsys_last_inv_count";
+const LS_ITEMS_KEY     = "iconsys_cached_items";
+const LS_DEALERS_KEY   = "iconsys_cached_dealers";
+const LS_INV_COUNT     = "iconsys_last_inv_count";
+const LS_INV_SEQ       = "iconsys_last_inv_seq";
+const LS_QUOTATION_SEQ = "iconsys_last_quotation_seq";
+
+// Helper: calculate dynamic quotation ref prefix based on year (e.g. 2026 -> ICS/AWLC/Q/2026-27/, 2027 -> ICS/AWLC/Q/2027-28/)
+const getQuotationRefPrefix = (dateStr) => {
+  let yr = new Date().getFullYear();
+  if (dateStr) {
+    try {
+      const d = new Date(dateStr);
+      if (!isNaN(d.getFullYear())) {
+        yr = d.getFullYear();
+      }
+    } catch (_) {}
+  }
+  const nextYrShort = String((yr + 1) % 100).padStart(2, "0");
+  return `ICS/AWLC/Q/${yr}-${nextYrShort}/`;
+};
+
+// Helper: calculate next invoice number (starts at 447 for Icon Systems, increments after every invoice)
+const calcNextInvoiceNumber = (docs, orgProfile) => {
+  const isIcon = !orgProfile || !orgProfile.name || orgProfile.name.toUpperCase().includes("ICON SYSTEMS");
+  const baseStart = isIcon ? 447 : 1;
+
+  let maxNum = 0;
+  (docs || []).forEach((doc) => {
+    const data = typeof doc?.data === "function" ? doc.data() : doc;
+    if (data && data.template_type !== "quotation") {
+      const num = parseInt((data.invoice_number || "").toString().replace(/\D/g, ""), 10);
+      if (!isNaN(num) && num > maxNum) {
+        maxNum = num;
+      }
+    }
+  });
+
+  if (maxNum < baseStart) {
+    return baseStart.toString();
+  }
+  return (maxNum + 1).toString();
+};
 
 export default function InvoiceEditor() {
   const { id } = useParams(); // if edit mode
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -27,12 +70,63 @@ export default function InvoiceEditor() {
   const [predefinedDealers, setPredefinedDealers] = useState([]);
   const [error, setError] = useState("");
   const [toast, setToast] = useState(null); // { message, type }
+  const [existingDocs, setExistingDocs] = useState([]);
+
+  // Instant 0ms cached sequence number initializers
+  const [quotationSeq, setQuotationSeq] = useState(() => {
+    try {
+      const c = localStorage.getItem(LS_QUOTATION_SEQ);
+      if (c) return c;
+    } catch (_) {}
+    return "1";
+  });
+
+  const [invoiceSeq, setInvoiceSeq] = useState(() => {
+    try {
+      const c = localStorage.getItem(LS_INV_SEQ);
+      const parsed = parseInt(c || "0", 10);
+      if (parsed >= 447) return parsed.toString();
+    } catch (_) {}
+    return "447";
+  });
 
   // Invoice State variables
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [dueDate, setDueDate] = useState("");
-  const [templateType, setTemplateType] = useState("template1"); // template1 or template2
+  const [templateType, setTemplateType] = useState("template1");
+  const [uploadingDrive, setUploadingDrive] = useState(false);
+
+  useEffect(() => {
+    initDriveAuth();
+  }, []);
+
+  // Auto-switch template and sequence number whenever URL param changes
+  useEffect(() => {
+    if (id) return; // Edit mode keeps existing saved invoice_number
+    const isQuotationParam = searchParams.get("type") === "quotation";
+    
+    if (isQuotationParam) {
+      setTemplateType("quotation");
+      setInvoiceNumber(quotationSeq);
+    } else {
+      if (templateType === "quotation") {
+        setTemplateType("template1");
+      }
+      setInvoiceNumber(invoiceSeq);
+    }
+  }, [searchParams, id, quotationSeq, invoiceSeq]);
+
+  const handleSelectTemplate = (targetType) => {
+    setTemplateType(targetType);
+    if (!id) {
+      if (targetType === "quotation") {
+        setInvoiceNumber(quotationSeq);
+      } else {
+        setInvoiceNumber(invoiceSeq);
+      }
+    }
+  };
   // Predefined items select dropdown state
   
   const [customerName, setCustomerName] = useState("");
@@ -77,6 +171,29 @@ export default function InvoiceEditor() {
 
   const [notes, setNotes] = useState("Make all cheques payable to Company Name.");
 
+  // Quotation Specific State
+  const [quotationRefPrefix, setQuotationRefPrefix] = useState(() => getQuotationRefPrefix(new Date().toISOString().split("T")[0]));
+  const [quotationSubject, setQuotationSubject] = useState("providing Automatic Water Level Controller Cum Indicator");
+  const [quotationGuarantee, setQuotationGuarantee] = useState("One year (against manufacturing defect only)");
+  const [quotationValidity, setQuotationValidity] = useState("One month");
+  const [quotationCable, setQuotationCable] = useState("As per final measurement");
+  const [showQuotationCable, setShowQuotationCable] = useState(true);
+  const [quotationPayment, setQuotationPayment] = useState("Advance 50% after installation 100% payment");
+  const [showQuotationPayment, setShowQuotationPayment] = useState(true);
+  const [quotationNote, setQuotationNote] = useState("");
+  const [showQuotationNote, setShowQuotationNote] = useState(true);
+
+  // Update quotation prefix whenever date changes (unless custom prefix was entered)
+  useEffect(() => {
+    if (id) return;
+    setQuotationRefPrefix((prev) => {
+      if (!prev || /^ICS\/AWLC\/Q\/(APD\/)?\d{4}-\d{2}\/$/i.test(prev.trim())) {
+        return getQuotationRefPrefix(date);
+      }
+      return prev;
+    });
+  }, [date, id]);
+
   // Line items - start with one empty row
   const [items, setItems] = useState([
     { description: "", hsn_code: "", quantity: 1, unit: "No", rate: 0, amount: 0 }
@@ -96,8 +213,13 @@ export default function InvoiceEditor() {
         const cd = localStorage.getItem(LS_DEALERS_KEY);
         if (cd) setPredefinedDealers(JSON.parse(cd));
         if (!id) {
-          const cc = parseInt(localStorage.getItem(LS_INV_COUNT) || "0", 10);
-          if (cc > 0) setInvoiceNumber((cc + 391).toString());
+          const c = localStorage.getItem(LS_INV_SEQ);
+          const parsed = parseInt(c || "0", 10);
+          if (parsed >= 447) {
+            setInvoiceNumber(parsed.toString());
+          } else {
+            setInvoiceNumber("447");
+          }
         }
       } catch (_) {}
 
@@ -179,9 +301,23 @@ export default function InvoiceEditor() {
         } else {
           const qInv = query(collection(db, "invoices"), where("userId", "==", uid));
           const snap = await getDocs(qInv);
-          const count = snap.size;
-          try { localStorage.setItem(LS_INV_COUNT, String(count)); } catch (_) {}
-          setInvoiceNumber((count + 391).toString());
+          const docsList = [];
+          snap.forEach(d => docsList.push(d.data()));
+          setExistingDocs(docsList);
+          
+          const quotationDocs = docsList.filter(d => d.template_type === "quotation");
+          const qSeq = (quotationDocs.length + 1).toString();
+          const iSeq = calcNextInvoiceNumber(docsList, profSnap.exists() ? profSnap.data() : profile);
+          
+          setQuotationSeq(qSeq);
+          setInvoiceSeq(iSeq);
+          if (searchParams.get("type") !== "quotation" && templateType !== "quotation") {
+            setInvoiceNumber(iSeq);
+          }
+          try {
+            localStorage.setItem(LS_QUOTATION_SEQ, qSeq);
+            localStorage.setItem(LS_INV_SEQ, iSeq);
+          } catch (_) {}
         }
       } catch (err) {
         console.warn("Background network refresh failed:", err);
@@ -227,10 +363,64 @@ export default function InvoiceEditor() {
       setDispatchedThrough(data.dispatched_through || "");
       setDestination(data.destination || "");
       setTermsOfDelivery(data.terms_of_delivery || "");
+      
+      // Quotation
+      setQuotationRefPrefix(data.quotation_ref_prefix ? data.quotation_ref_prefix.replace(/\/APD\//i, "/") : getQuotationRefPrefix(data.date));
+      setQuotationSubject(data.quotation_subject || "providing Automatic Water Level Controller Cum Indicator");
+      setQuotationGuarantee(data.quotation_guarantee || "One year (against manufacturing defect only)");
+      setQuotationValidity(data.quotation_validity || "One month");
+      setQuotationCable(data.quotation_cable || "As per final measurement");
+      setShowQuotationCable(data.show_quotation_cable !== false);
+      setQuotationPayment(data.quotation_payment || "Advance 50% after installation 100% payment");
+      setShowQuotationPayment(data.show_quotation_payment !== false);
+      setQuotationNote(data.quotation_note || "");
+      setShowQuotationNote(data.show_quotation_note !== false);
     };
 
     loadInitData();
   }, [id]);
+
+  // Auto-calculate default serial number based on templateType (only for new docs)
+  useEffect(() => {
+    if (id || !auth.currentUser) return;
+    
+    const updateDefaultNumber = async () => {
+      const uid = auth.currentUser.uid;
+      try {
+        const q = query(
+          collection(db, "invoices"),
+          where("userId", "==", uid)
+        );
+        let snap;
+        try {
+          snap = await getDocsFromCache(q);
+        } catch (_) {
+          snap = await getDocs(q);
+        }
+
+        if (templateType === "quotation") {
+          let quotationCount = 0;
+          snap.forEach((doc) => {
+            if (doc.data().template_type === "quotation") {
+              quotationCount++;
+            }
+          });
+          setInvoiceNumber((quotationCount + 1).toString());
+        } else {
+          const nextNum = calcNextInvoiceNumber(snap.docs, profile);
+          setInvoiceNumber(nextNum);
+          setInvoiceSeq(nextNum);
+          try {
+            localStorage.setItem(LS_INV_SEQ, nextNum);
+          } catch (_) {}
+        }
+      } catch (err) {
+        console.warn("Failed to calculate next serial number:", err);
+      }
+    };
+
+    updateDefaultNumber();
+  }, [templateType, id, profile]);
 
   // Auto-generate IRN and Ack details when invoiceNumber or date changes
   useEffect(() => {
@@ -415,6 +605,16 @@ export default function InvoiceEditor() {
         terms_of_delivery: termsOfDelivery,
         invoice_phone: invoicePhone,
         show_website: showWebsite,
+        quotation_ref_prefix: templateType === "quotation" ? quotationRefPrefix : "",
+        quotation_subject: templateType === "quotation" ? quotationSubject : "",
+        quotation_guarantee: templateType === "quotation" ? quotationGuarantee : "",
+        quotation_validity: templateType === "quotation" ? quotationValidity : "",
+        quotation_cable: templateType === "quotation" ? quotationCable : "",
+        show_quotation_cable: templateType === "quotation" ? showQuotationCable : true,
+        quotation_payment: templateType === "quotation" ? quotationPayment : "",
+        show_quotation_payment: templateType === "quotation" ? showQuotationPayment : true,
+        quotation_note: templateType === "quotation" ? quotationNote : "",
+        show_quotation_note: templateType === "quotation" ? showQuotationNote : true,
         updated_at: new Date().toISOString()
       };
 
@@ -428,14 +628,10 @@ export default function InvoiceEditor() {
           try {
             const element = document.getElementById("hidden-pdf-print-target");
             if (element) {
-              const opt = {
-                margin:       0,
-                filename:     `Invoice_${invoiceNumber}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2.0, useCORS: true, letterRendering: true },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-              };
-              const pdfBlob = await html2pdf().from(element).set(opt).output('blob');
+              const isQuotation = templateType === "quotation";
+              const custName = (customerName || "").replace(/\s+/g, '_');
+              const fileName = `${isQuotation ? "Quotation" : "Invoice"}_${invoiceNumber}${custName ? `_${custName}` : ""}.pdf`;
+              const pdfBlob = await generatePdfBlob(element, fileName);
               const storageRef = ref(storage, `invoices/${invoiceDocId}.pdf`);
               await uploadBytes(storageRef, pdfBlob);
               const downloadUrl = await getDownloadURL(storageRef);
@@ -469,8 +665,17 @@ export default function InvoiceEditor() {
           ...finalPayload,
           created_at: new Date().toISOString()
         });
+
+        // Advance sequence cache so the next invoice is automatically incremented
+        if (templateType !== "quotation") {
+          try {
+            const savedNum = parseInt((invoiceNumber || "").toString().replace(/\D/g, ""), 10);
+            const nextSeq = (!isNaN(savedNum) ? Math.max(savedNum + 1, 447) : 447).toString();
+            localStorage.setItem(LS_INV_SEQ, nextSeq);
+          } catch (_) {}
+        }
+
         if (isOffline) {
-          // Increment cached count for next offline invoice number
           try {
             const prev = parseInt(localStorage.getItem(LS_INV_COUNT) || "0", 10);
             localStorage.setItem(LS_INV_COUNT, String(prev + 1));
@@ -525,7 +730,17 @@ export default function InvoiceEditor() {
     dispatch_doc_date: dispatchDocDate,
     dispatched_through: dispatchedThrough,
     destination: destination,
-    terms_of_delivery: termsOfDelivery
+    terms_of_delivery: termsOfDelivery,
+    quotation_ref_prefix: quotationRefPrefix,
+    quotation_subject: quotationSubject,
+    quotation_guarantee: quotationGuarantee,
+    quotation_validity: quotationValidity,
+    quotation_cable: quotationCable,
+    show_quotation_cable: showQuotationCable,
+    quotation_payment: quotationPayment,
+    show_quotation_payment: showQuotationPayment,
+    quotation_note: quotationNote,
+    show_quotation_note: showQuotationNote
   };
 
   // Build org data override — merges saved profile with per-invoice phone and website toggle
@@ -544,28 +759,49 @@ export default function InvoiceEditor() {
   }
 
   // Download PDF from hidden target
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     const element = document.getElementById("hidden-pdf-print-target");
     if (!element) return;
-    const opt = {
-      margin: 0,
-      filename: `Invoice_${invoiceNumber}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2.5, useCORS: true, letterRendering: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-    html2pdf().from(element).set(opt).save();
+    const isQuotation = templateType === "quotation";
+    const custName = (customerName || "").replace(/\s+/g, '_');
+    const fileName = `${isQuotation ? "Quotation" : "Invoice"}_${invoiceNumber}${custName ? `_${custName}` : ""}.pdf`;
+    await downloadPdf(element, fileName);
+  };
+
+  // Upload PDF directly to User's Google Drive
+  const handleUploadToDrive = async () => {
+    const element = document.getElementById("hidden-pdf-print-target");
+    if (!element) return;
+    setUploadingDrive(true);
+    try {
+      const fileName = `${templateType === "quotation" ? "Quotation" : "Invoice"}_${invoiceNumber}.pdf`;
+      const pdfBlob = await generatePdfBlob(element, fileName);
+
+      const isQuotation = templateType === "quotation";
+      const result = await uploadPdfToDrive(pdfBlob, fileName, isQuotation);
+      setToast({ message: `Successfully uploaded to Google Drive folder 'ICON ${isQuotation ? "Quotations" : "Invoices"}'!`, type: "success" });
+      if (result && result.webViewLink) {
+        window.open(result.webViewLink, "_blank");
+      }
+    } catch (err) {
+      console.error("Google Drive upload error:", err);
+      setToast({ message: `Drive upload failed: ${err.message || "Authorization canceled"}`, type: "error" });
+    } finally {
+      setUploadingDrive(false);
+    }
   };
 
   return (
     <div className="app-container">
       {/* Hidden print container for always-on PDF generation */}
-      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', width: '760px' }}>
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '794px', zIndex: -9999, opacity: 0.001, pointerEvents: 'none' }}>
         <div id="hidden-pdf-print-target">
           {templateType === "template1" ? (
             <Template1 invoiceData={previewInvoiceData} orgData={previewOrgData} />
           ) : templateType === "template3" ? (
             <Template3 invoiceData={previewInvoiceData} orgData={previewOrgData} />
+          ) : templateType === "quotation" ? (
+            <QuotationTemplate invoiceData={previewInvoiceData} orgData={previewOrgData} />
           ) : (
             <Template2 invoiceData={previewInvoiceData} orgData={previewOrgData} />
           )}
@@ -587,7 +823,12 @@ export default function InvoiceEditor() {
             <button onClick={() => navigate("/")} style={{ padding: "8px", borderRadius: "8px", backgroundColor: "var(--card-bg)", color: "var(--text-primary)", flexShrink: 0 }}>
               <ArrowLeft size={18} />
             </button>
-            <h1 className="editor-title">{id ? "Edit Invoice" : "Create New Invoice"}</h1>
+            <h1 className="editor-title">
+              {id 
+                ? (templateType === "quotation" ? "Edit Quotation" : "Edit Invoice")
+                : (templateType === "quotation" ? "Create New Quotation" : "Create New Invoice")
+              }
+            </h1>
           </div>
           <div style={{ display: "flex", gap: "10px" }}>
             {/* View PDF Button (Always Visible) */}
@@ -630,7 +871,10 @@ export default function InvoiceEditor() {
               }}
             >
               {saving ? <Loader className="animate-spin" size={16} /> : <Save size={16} />}
-              {saving ? "Saving..." : "Save Invoice"}
+              {saving
+                ? "Saving..."
+                : (templateType === "quotation" ? "Save Quotation" : "Save Invoice")
+              }
             </button>
           </div>
         </div>
@@ -650,71 +894,93 @@ export default function InvoiceEditor() {
             
             {/* Template Selector & Meta */}
             <div>
-              <h3 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "16px", color: "var(--accent-color)" }}>Invoice Templates</h3>
-              <div className="template-selector-grid" style={{ gap: "12px" }}>
-                <button
-                  type="button"
-                  onClick={() => setTemplateType("template1")}
-                  style={{
-                    padding: "12px 8px",
+              {templateType === "quotation" ? (
+                <div>
+                  <h3 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "8px", color: "#8b5cf6" }}>Quotation Format</h3>
+                  <div style={{
+                    padding: "10px 14px",
                     borderRadius: "10px",
-                    border: templateType === "template1" ? "2px solid var(--accent-color)" : "1px solid var(--border-color)",
-                    backgroundColor: templateType === "template1" ? "var(--accent-glow)" : "var(--input-bg)",
-                    color: "var(--text-primary)",
+                    border: "1px solid rgba(139, 92, 246, 0.4)",
+                    backgroundColor: "rgba(139, 92, 246, 0.15)",
+                    color: "#8b5cf6",
                     fontWeight: "600",
-                    fontSize: "12px",
-                    textAlign: "center"
-                  }}
-                >
-                  <span className="template-btn-full">Icon Systems GST Style</span>
-                  <span className="template-btn-short">1</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTemplateType("template2")}
-                  style={{
-                    padding: "12px 8px",
-                    borderRadius: "10px",
-                    border: templateType === "template2" ? "2px solid var(--accent-color)" : "1px solid var(--border-color)",
-                    backgroundColor: templateType === "template2" ? "var(--accent-glow)" : "var(--input-bg)",
-                    color: "var(--text-primary)",
-                    fontWeight: "600",
-                    fontSize: "12px",
-                    textAlign: "center"
-                  }}
-                >
-                  <span className="template-btn-full">Tax / e-Invoice Style</span>
-                  <span className="template-btn-short">2</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTemplateType("template3")}
-                  style={{
-                    padding: "12px 8px",
-                    borderRadius: "10px",
-                    border: templateType === "template3" ? "2px solid var(--accent-color)" : "1px solid var(--border-color)",
-                    backgroundColor: templateType === "template3" ? "var(--accent-glow)" : "var(--input-bg)",
-                    color: "var(--text-primary)",
-                    fontWeight: "600",
-                    fontSize: "12px",
-                    textAlign: "center"
-                  }}
-                >
-                  <span className="template-btn-full">Pre-Printed Letterhead Style</span>
-                  <span className="template-btn-short">3</span>
-                </button>
-              </div>
+                    fontSize: "13px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px"
+                  }}>
+                    📄 Standard Icon Systems Quotation Format
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <h3 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "16px", color: "var(--accent-color)" }}>Invoice Templates</h3>
+                  <div className="template-selector-grid" style={{ gap: "12px", gridTemplateColumns: "repeat(3, 1fr)" }}>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectTemplate("template1")}
+                      style={{
+                        padding: "12px 8px",
+                        borderRadius: "10px",
+                        border: templateType === "template1" ? "2px solid var(--accent-color)" : "1px solid var(--border-color)",
+                        backgroundColor: templateType === "template1" ? "var(--accent-glow)" : "var(--input-bg)",
+                        color: "var(--text-primary)",
+                        fontWeight: "600",
+                        fontSize: "12px",
+                        textAlign: "center"
+                      }}
+                    >
+                      <span className="template-btn-full">Icon Systems GST Style</span>
+                      <span className="template-btn-short">1</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectTemplate("template2")}
+                      style={{
+                        padding: "12px 8px",
+                        borderRadius: "10px",
+                        border: templateType === "template2" ? "2px solid var(--accent-color)" : "1px solid var(--border-color)",
+                        backgroundColor: templateType === "template2" ? "var(--accent-glow)" : "var(--input-bg)",
+                        color: "var(--text-primary)",
+                        fontWeight: "600",
+                        fontSize: "12px",
+                        textAlign: "center"
+                      }}
+                    >
+                      <span className="template-btn-full">Tax / e-Invoice Style</span>
+                      <span className="template-btn-short">2</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectTemplate("template3")}
+                      style={{
+                        padding: "12px 8px",
+                        borderRadius: "10px",
+                        border: templateType === "template3" ? "2px solid var(--accent-color)" : "1px solid var(--border-color)",
+                        backgroundColor: templateType === "template3" ? "var(--accent-glow)" : "var(--input-bg)",
+                        color: "var(--text-primary)",
+                        fontWeight: "600",
+                        fontSize: "12px",
+                        textAlign: "center"
+                      }}
+                    >
+                      <span className="template-btn-full">Pre-Printed Letterhead Style</span>
+                      <span className="template-btn-short">3</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* General Meta Info */}
             <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "20px" }}>
               <div className="form-grid-2">
                 <div>
-                  <label style={{ display: "block", marginBottom: "6px", fontSize: "12px", color: "var(--text-secondary)", fontWeight: "600" }}>INVOICE NUMBER</label>
-                  <input required type="text" value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} placeholder="e.g. 391" />
+                  <label style={{ display: "block", marginBottom: "6px", fontSize: "12px", color: "var(--text-secondary)", fontWeight: "600" }}>{templateType === "quotation" ? "QUOTATION NUMBER" : "INVOICE NUMBER"}</label>
+                  <input required type="text" value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} placeholder={templateType === "quotation" ? "e.g. 1" : "e.g. 447"} />
                 </div>
                 <div>
-                  <label style={{ display: "block", marginBottom: "6px", fontSize: "12px", color: "var(--text-secondary)", fontWeight: "600" }}>INVOICE DATE</label>
+                  <label style={{ display: "block", marginBottom: "6px", fontSize: "12px", color: "var(--text-secondary)", fontWeight: "600" }}>{templateType === "quotation" ? "QUOTATION DATE" : "INVOICE DATE"}</label>
                   <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
                 </div>
               </div>
@@ -957,6 +1223,58 @@ export default function InvoiceEditor() {
                 </div>
                 <input type="text" value={destination} onChange={(e) => setDestination(e.target.value)} placeholder="Destination City" />
                 <textarea rows={2} value={termsOfDelivery} onChange={(e) => setTermsOfDelivery(e.target.value)} placeholder="Terms of Delivery" />
+              </div>
+            )}
+
+            {/* Quotation Specific Details */}
+            {templateType === "quotation" && (
+              <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "20px", display: "flex", flexDirection: "column", gap: "15px" }}>
+                <h3 style={{ fontSize: "13px", fontWeight: "600", color: "var(--text-secondary)" }}>QUOTATION DETAILS</h3>
+                
+                <div>
+                  <label style={{ display: "block", marginBottom: "4px", fontSize: "10px", color: "var(--text-secondary)" }}>QUOTATION REF PREFIX</label>
+                  <input type="text" value={quotationRefPrefix} onChange={(e) => setQuotationRefPrefix(e.target.value)} placeholder={`e.g. ${getQuotationRefPrefix(date)}`} style={{ width: "100%" }} />
+                </div>
+
+                <div>
+                  <label style={{ display: "block", marginBottom: "4px", fontSize: "10px", color: "var(--text-secondary)" }}>QUOTATION SUBJECT</label>
+                  <input type="text" value={quotationSubject} onChange={(e) => setQuotationSubject(e.target.value)} placeholder="Quotation Subject" style={{ width: "100%" }} />
+                </div>
+
+                <div>
+                  <label style={{ display: "block", marginBottom: "4px", fontSize: "10px", color: "var(--text-secondary)" }}>GUARANTEE</label>
+                  <input type="text" value={quotationGuarantee} onChange={(e) => setQuotationGuarantee(e.target.value)} placeholder="Guarantee Term" style={{ width: "100%" }} />
+                </div>
+
+                <div className="form-grid-2">
+                  <div>
+                    <label style={{ display: "block", marginBottom: "4px", fontSize: "10px", color: "var(--text-secondary)" }}>VALIDITY</label>
+                    <input type="text" value={quotationValidity} onChange={(e) => setQuotationValidity(e.target.value)} placeholder="Validity Term" style={{ width: "100%" }} />
+                  </div>
+                  <div>
+                    <label style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px", fontSize: "10px", color: "var(--text-secondary)", cursor: "pointer" }}>
+                      <input type="checkbox" checked={showQuotationCable} onChange={(e) => setShowQuotationCable(e.target.checked)} style={{ width: "auto", margin: 0 }} />
+                      CABLE (SHOW ON PRINT)
+                    </label>
+                    <input type="text" value={quotationCable} onChange={(e) => setQuotationCable(e.target.value)} placeholder="Cable Term" style={{ width: "100%" }} disabled={!showQuotationCable} />
+                  </div>
+                </div>
+
+                <div style={{ marginTop: "12px" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px", fontSize: "10px", color: "var(--text-secondary)", cursor: "pointer" }}>
+                    <input type="checkbox" checked={showQuotationPayment} onChange={(e) => setShowQuotationPayment(e.target.checked)} style={{ width: "auto", margin: 0 }} />
+                    PAYMENT (SHOW ON PRINT)
+                  </label>
+                  <input type="text" value={quotationPayment} onChange={(e) => setQuotationPayment(e.target.value)} placeholder="Payment Term" style={{ width: "100%" }} disabled={!showQuotationPayment} />
+                </div>
+
+                <div style={{ marginTop: "12px" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px", fontSize: "10px", color: "var(--text-secondary)", cursor: "pointer" }}>
+                    <input type="checkbox" checked={showQuotationNote} onChange={(e) => setShowQuotationNote(e.target.checked)} style={{ width: "auto", margin: 0 }} />
+                    NOTE (SHOW ON PRINT)
+                  </label>
+                  <input type="text" value={quotationNote} onChange={(e) => setQuotationNote(e.target.value)} placeholder="Note Term" style={{ width: "100%" }} disabled={!showQuotationNote} />
+                </div>
               </div>
             )}
 
@@ -1296,6 +1614,8 @@ export default function InvoiceEditor() {
                   <Template1 invoiceData={previewInvoiceData} orgData={previewOrgData} />
                 ) : templateType === "template3" ? (
                   <Template3 invoiceData={previewInvoiceData} orgData={previewOrgData} />
+                ) : templateType === "quotation" ? (
+                  <QuotationTemplate invoiceData={previewInvoiceData} orgData={previewOrgData} />
                 ) : (
                   <Template2 invoiceData={previewInvoiceData} orgData={previewOrgData} />
                 )}
@@ -1364,6 +1684,8 @@ export default function InvoiceEditor() {
                     <Template1 invoiceData={previewInvoiceData} orgData={previewOrgData} />
                   ) : templateType === "template3" ? (
                     <Template3 invoiceData={previewInvoiceData} orgData={previewOrgData} />
+                  ) : templateType === "quotation" ? (
+                    <QuotationTemplate invoiceData={previewInvoiceData} orgData={previewOrgData} />
                   ) : (
                     <Template2 invoiceData={previewInvoiceData} orgData={previewOrgData} />
                   )}
@@ -1424,7 +1746,7 @@ export default function InvoiceEditor() {
             gap: "8px",
             padding: "12px",
             borderRadius: "8px",
-            backgroundColor: "var(--accent-color)",
+            backgroundColor: templateType === "quotation" ? "#8b5cf6" : "var(--accent-color)",
             border: "none",
             color: "#fff",
             fontSize: "14px",
@@ -1433,7 +1755,9 @@ export default function InvoiceEditor() {
           }}
         >
           {saving ? <Loader className="animate-spin" size={16} /> : <Save size={16} />}
-          Save Invoice
+          {templateType === "quotation"
+            ? (id ? "Save Quotation" : "Save Quotation")
+            : (id ? "Save Invoice" : "Save Invoice")}
         </button>
       </div>
     </div>
