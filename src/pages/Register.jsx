@@ -46,7 +46,7 @@ export default function Register() {
         phone: orgName.toLowerCase().includes("icon system") ? "9845913976, 8884880066" : "",
         website: orgName.toLowerCase().includes("icon system") ? "www.iconsystemsblr.com" : "",
         address: orgName.toLowerCase().includes("icon system") 
-          ? "# 507, 10th A Cross, Sanjeevini Nagar, Nagarbhavi Main Road, Bengaluru- 560072" 
+          ? "# 507, 10th A Cross,!Sanjeevini Nagar, Nagarbhavi Main Road,!Bengaluru- 560072" 
           : "",
         gstin: orgName.toLowerCase().includes("icon system") ? "29ANUPR9033R1ZL" : "",
         state_code: "29", // default Karnataka

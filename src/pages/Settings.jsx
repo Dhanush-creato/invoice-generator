@@ -39,6 +39,9 @@ export default function Settings() {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
+          if (data.name?.toUpperCase().includes("ICON") && data.address?.includes("Sanjeevini Nagar") && !data.address?.includes("!")) {
+            data.address = "# 507, 10th A Cross,!Sanjeevini Nagar, Nagarbhavi Main Road,!Bengaluru- 560072";
+          }
           console.log("Loaded profile settings from Firestore:", data);
           setProfile(data);
         } else {
@@ -247,10 +250,30 @@ export default function Settings() {
           
           {/* Organization Details Panel */}
           <div className="glass" style={{ padding: "32px" }}>
-            <h3 style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px", fontSize: "18px", fontWeight: "600" }}>
+            <h3 style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "15px", fontSize: "18px", fontWeight: "600" }}>
               <Building2 size={20} style={{ color: "var(--accent-color)" }} />
               Organization Details
             </h3>
+
+            {/* Instruction Banner at top */}
+            <div style={{
+              marginBottom: "20px",
+              padding: "10px 14px",
+              borderRadius: "8px",
+              backgroundColor: "rgba(59, 130, 246, 0.08)",
+              border: "1px solid rgba(59, 130, 246, 0.25)",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "10px",
+              fontSize: "12px",
+              color: "var(--text-primary)",
+              lineHeight: "1.45"
+            }}>
+              <span style={{ fontSize: "16px", marginTop: "-1px" }}>💡</span>
+              <div>
+                <strong>Address Formatting Tip:</strong> Use an exclamation mark (<strong>!</strong>) as a line separator in office & customer addresses (e.g. <code># 507, 10th A Cross,!Sanjeevini Nagar, Nagarbhavi Main Road,!Bengaluru- 560072</code>). Each section separated by <strong>!</strong> will be rendered on a clean separate line on the invoice.
+              </div>
+            </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "20px", marginBottom: "20px" }}>
               <div>
@@ -286,8 +309,22 @@ export default function Settings() {
             </div>
 
             <div style={{ marginBottom: "20px" }}>
-              <label style={{ display: "block", marginBottom: "6px", fontSize: "12px", color: "var(--text-secondary)", fontWeight: "600" }}>OFFICE ADDRESS</label>
-              <textarea name="address" rows={3} value={profile?.address || ""} onChange={handleChange} placeholder="Enter full address" />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", flexWrap: "wrap", gap: "6px" }}>
+                <label style={{ fontSize: "12px", color: "var(--text-secondary)", fontWeight: "600" }}>OFFICE ADDRESS</label>
+                <span style={{ fontSize: "11px", color: "var(--accent-color, #3b82f6)", fontWeight: "600" }}>
+                  💡 Use ! as a line separator
+                </span>
+              </div>
+              <textarea 
+                name="address" 
+                rows={3} 
+                value={profile?.address || ""} 
+                onChange={handleChange} 
+                placeholder="e.g. # 507, 10th A Cross,!Sanjeevini Nagar, Nagarbhavi Main Road,!Bengaluru- 560072" 
+              />
+              <span style={{ display: "block", marginTop: "4px", fontSize: "11px", color: "var(--text-secondary)" }}>
+                Tip: Use <strong>!</strong> between address lines so each part appears on its own line on the invoice.
+              </span>
             </div>
 
             {/* Logo and Signature Image Uploader */}

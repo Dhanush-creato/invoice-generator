@@ -39,7 +39,7 @@ export default function Template1({ invoiceData, orgData }) {
     tagline: "Automatic Water Level Controller Cum Indicator, Digital Controllers, Digital Indicators And Timers",
     phone: "9845913976, 8884880066",
     website: "www.iconsystemsblr.com",
-    address: "# 507, 10th A Cross, Sanjeevini Nagar, Nagarbhavi Main Road, Bengaluru- 560072",
+    address: "# 507, 10th A Cross,!Sanjeevini Nagar, Nagarbhavi Main Road,!Bengaluru- 560072",
     gstin: "29ANUPR9033R1ZL",
     state_code: "29",
     logo_url: "",

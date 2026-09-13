@@ -1076,7 +1076,11 @@ export default function InvoiceEditor() {
                   )}
                 </div>
 
-                <textarea rows={3} value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} placeholder="Full Billing Address" />
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "10px", color: "var(--text-secondary)", fontWeight: "600" }}>CUSTOMER BILLING ADDRESS</label>
+                  <span style={{ fontSize: "10px", color: "var(--accent-color)" }}>💡 Use ! to separate lines</span>
+                </div>
+                <textarea rows={3} value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} placeholder="Full Billing Address (use ! to break lines)" />
                 
                 <div className="form-grid-2">
                   <input type="text" value={customerGstin} onChange={(e) => setCustomerGstin(e.target.value)} placeholder="Customer GSTIN" style={{ textTransform: "uppercase" }} />
@@ -1114,12 +1118,18 @@ export default function InvoiceEditor() {
                       onChange={(e) => setShippingName(e.target.value)} 
                       placeholder="Consignee Name" 
                     />
-                    <textarea 
-                      rows={2} 
-                      value={shippingAddress} 
-                      onChange={(e) => setShippingAddress(e.target.value)} 
-                      placeholder="Consignee Shipping Address" 
-                    />
+                    <div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                        <label style={{ fontSize: "10px", color: "var(--text-secondary)", fontWeight: "600" }}>CONSIGNEE ADDRESS</label>
+                        <span style={{ fontSize: "10px", color: "var(--accent-color)" }}>💡 Use ! to separate lines</span>
+                      </div>
+                      <textarea 
+                        rows={2} 
+                        value={shippingAddress} 
+                        onChange={(e) => setShippingAddress(e.target.value)} 
+                        placeholder="Consignee Shipping Address (use ! to break lines)" 
+                      />
+                    </div>
                     <div className="form-grid-2">
                       <input 
                         type="text" 
@@ -1218,8 +1228,22 @@ export default function InvoiceEditor() {
                   <input type="text" value={refNoDate} onChange={(e) => setRefNoDate(e.target.value)} placeholder="Ref No & Date" />
                 </div>
                 <div className="form-grid-2">
-                  <input type="text" value={buyerOrderNo} onChange={(e) => setBuyerOrderNo(e.target.value)} placeholder="Buyer Order No" />
+                  <input type="text" value={otherReferences} onChange={(e) => setOtherReferences(e.target.value)} placeholder="Other References" />
                   <input type="text" value={dispatchedThrough} onChange={(e) => setDispatchedThrough(e.target.value)} placeholder="Dispatched Through (e.g. Courier)" />
+                </div>
+                <div className="form-grid-2">
+                  <input type="text" value={buyerOrderNo} onChange={(e) => setBuyerOrderNo(e.target.value)} placeholder="Purchase Order No" />
+                  <div>
+                    <label style={{ display: "block", marginBottom: "4px", fontSize: "10px", color: "var(--text-secondary)" }}>PURCHASE ORDER DATE</label>
+                    <input type="date" value={buyerOrderDate} onChange={(e) => setBuyerOrderDate(e.target.value)} style={{ width: "100%" }} />
+                  </div>
+                </div>
+                <div className="form-grid-2">
+                  <input type="text" value={dispatchDocNo} onChange={(e) => setDispatchDocNo(e.target.value)} placeholder="Dispatch Challan No" />
+                  <div>
+                    <label style={{ display: "block", marginBottom: "4px", fontSize: "10px", color: "var(--text-secondary)" }}>DELIVERY CHALLAN DATE</label>
+                    <input type="date" value={dispatchDocDate} onChange={(e) => setDispatchDocDate(e.target.value)} style={{ width: "100%" }} />
+                  </div>
                 </div>
                 <input type="text" value={destination} onChange={(e) => setDestination(e.target.value)} placeholder="Destination City" />
                 <textarea rows={2} value={termsOfDelivery} onChange={(e) => setTermsOfDelivery(e.target.value)} placeholder="Terms of Delivery" />
