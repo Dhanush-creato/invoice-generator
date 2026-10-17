@@ -82,6 +82,40 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
+/* Date Picker Calendar Icon Visibility */
+input[type="date"] {
+  color-scheme: dark;
+}
+
+.light-theme input[type="date"] {
+  color-scheme: light;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer !important;
+  filter: invert(1) brightness(1.8) !important;
+  -webkit-filter: invert(1) brightness(1.8) !important;
+  opacity: 1 !important;
+  padding: 4px !important;
+  border-radius: 4px !important;
+  transition: all 0.2s ease !important;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  transform: scale(1.1) !important;
+}
+
+.light-theme input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: none !important;
+  -webkit-filter: none !important;
+  opacity: 0.7 !important;
+}
+
+.light-theme input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  background-color: rgba(0, 0, 0, 0.08) !important;
+}
+
 input::placeholder, textarea::placeholder {
   color: var(--text-secondary);
   opacity: 0.6;
@@ -290,7 +324,6 @@ button {
   /* Ensure stamp and signature images remain visible */
   img.invoice-logo,
   img.invoice-signature {
-    filter: grayscale(100%) contrast(150%) !important;
     max-height: 60px !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;

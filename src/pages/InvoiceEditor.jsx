@@ -10,9 +10,10 @@ import Template2 from "../components/Template2";
 import Template3 from "../components/Template3";
 import QuotationTemplate from "../components/QuotationTemplate";
 import Toast from "../components/Toast";
-import { Save, Plus, Trash2, ArrowLeft, Loader, Users, FileText, Settings, AlertCircle, Percent, PlusCircle, MinusCircle, Download, CloudUpload } from "lucide-react";
+import { Save, Plus, Trash2, ArrowLeft, Loader, Users, FileText, Settings, AlertCircle, Percent, PlusCircle, MinusCircle, Download, CloudUpload, Upload, RotateCcw, PenTool, Check } from "lucide-react";
 import { initDriveAuth, uploadPdfToDrive } from "../utils/driveUpload";
 import { downloadPdf, generatePdfBlob } from "../utils/pdfUtils";
+import { compressImage } from "../utils/helpers";
 
 
 // localStorage keys for offline caching
@@ -37,26 +38,77 @@ const getQuotationRefPrefix = (dateStr) => {
   return `ICS/AWLC/Q/${yr}-${nextYrShort}/`;
 };
 
-// Helper: calculate next invoice number (starts at 447 for Icon Systems, increments after every invoice)
-const calcNextInvoiceNumber = (docs, orgProfile) => {
-  const isIcon = !orgProfile || !orgProfile.name || orgProfile.name.toUpperCase().includes("ICON SYSTEMS");
+// Helper: calculate next invoice number based on the most recently created invoice
+const calcNextInvoiceNumber = (docs, userEmail) => {
+  const isIcon = (userEmail || auth.currentUser?.email || "").toLowerCase().includes("icon");
   const baseStart = isIcon ? 447 : 1;
 
+  const invoiceDocs = (docs || [])
+    .map((doc) => (typeof doc?.data === "function" ? doc.data() : doc))
+    .filter((data) => data && data.template_type !== "quotation");
+
+  if (invoiceDocs.length === 0) {
+    return baseStart.toString();
+  }
+
+  // Sort by created_at / date descending (newest first)
+  invoiceDocs.sort((a, b) => {
+    const timeA = new Date(a.created_at || a.date || 0).getTime();
+    const timeB = new Date(b.created_at || b.date || 0).getTime();
+    return timeB - timeA;
+  });
+
+  const mostRecent = invoiceDocs[0];
+  const recentNum = parseInt((mostRecent.invoice_number || "").toString().replace(/\D/g, ""), 10);
+  if (!isNaN(recentNum) && recentNum >= baseStart) {
+    return (recentNum + 1).toString();
+  }
+
   let maxNum = 0;
-  (docs || []).forEach((doc) => {
-    const data = typeof doc?.data === "function" ? doc.data() : doc;
-    if (data && data.template_type !== "quotation") {
-      const num = parseInt((data.invoice_number || "").toString().replace(/\D/g, ""), 10);
-      if (!isNaN(num) && num > maxNum) {
-        maxNum = num;
-      }
-    }
+  invoiceDocs.forEach((d) => {
+    const n = parseInt((d.invoice_number || "").toString().replace(/\D/g, ""), 10);
+    if (!isNaN(n) && n > maxNum) maxNum = n;
   });
 
   if (maxNum < baseStart) {
     return baseStart.toString();
   }
   return (maxNum + 1).toString();
+};
+
+// Helper: calculate next quotation number based on the most recently created quotation
+const calcNextQuotationNumber = (docs) => {
+  const quotationDocs = (docs || [])
+    .map((doc) => (typeof doc?.data === "function" ? doc.data() : doc))
+    .filter((data) => data && data.template_type === "quotation");
+
+  if (quotationDocs.length === 0) {
+    return "1";
+  }
+
+  // Sort by created_at descending (newest first), then by date descending
+  quotationDocs.sort((a, b) => {
+    const timeA = new Date(a.created_at || a.date || 0).getTime();
+    const timeB = new Date(b.created_at || b.date || 0).getTime();
+    return timeB - timeA;
+  });
+
+  const mostRecent = quotationDocs[0];
+  const recentNum = parseInt((mostRecent.invoice_number || "").toString().replace(/\D/g, ""), 10);
+  if (!isNaN(recentNum) && recentNum > 0 && recentNum < 400) {
+    return (recentNum + 1).toString();
+  }
+
+  // Filter out any anomalous numbers >= 400 from old test invoices
+  const validNums = quotationDocs
+    .map((d) => parseInt((d.invoice_number || "").toString().replace(/\D/g, ""), 10))
+    .filter((n) => !isNaN(n) && n > 0 && n < 400);
+
+  if (validNums.length > 0) {
+    return (Math.max(...validNums) + 1).toString();
+  }
+
+  return (quotationDocs.length + 1).toString();
 };
 
 export default function InvoiceEditor() {
@@ -72,11 +124,12 @@ export default function InvoiceEditor() {
   const [toast, setToast] = useState(null); // { message, type }
   const [existingDocs, setExistingDocs] = useState([]);
 
-  // Instant 0ms cached sequence number initializers
+  // Instant cached sequence number initializers (sanitized against stale 447)
   const [quotationSeq, setQuotationSeq] = useState(() => {
     try {
       const c = localStorage.getItem(LS_QUOTATION_SEQ);
-      if (c) return c;
+      const parsed = parseInt(c || "0", 10);
+      if (!isNaN(parsed) && parsed > 0 && parsed < 400) return parsed.toString();
     } catch (_) {}
     return "1";
   });
@@ -85,16 +138,18 @@ export default function InvoiceEditor() {
     try {
       const c = localStorage.getItem(LS_INV_SEQ);
       const parsed = parseInt(c || "0", 10);
-      if (parsed >= 447) return parsed.toString();
+      if (parsed > 0) return parsed.toString();
     } catch (_) {}
-    return "447";
+    const isIconEmail = (auth.currentUser?.email || "").toLowerCase().includes("icon");
+    return isIconEmail ? "447" : "1";
   });
 
   // Invoice State variables
-  const [invoiceNumber, setInvoiceNumber] = useState("");
+  const isQuotationInitial = searchParams.get("type") === "quotation";
+  const [invoiceNumber, setInvoiceNumber] = useState(isQuotationInitial ? "1" : "1");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [dueDate, setDueDate] = useState("");
-  const [templateType, setTemplateType] = useState("template1");
+  const [templateType, setTemplateType] = useState(isQuotationInitial ? "quotation" : "template1");
   const [uploadingDrive, setUploadingDrive] = useState(false);
 
   useEffect(() => {
@@ -108,12 +163,12 @@ export default function InvoiceEditor() {
     
     if (isQuotationParam) {
       setTemplateType("quotation");
-      setInvoiceNumber(quotationSeq);
+      setInvoiceNumber(quotationSeq || "1");
     } else {
       if (templateType === "quotation") {
         setTemplateType("template1");
       }
-      setInvoiceNumber(invoiceSeq);
+      setInvoiceNumber(invoiceSeq || "1");
     }
   }, [searchParams, id, quotationSeq, invoiceSeq]);
 
@@ -121,9 +176,9 @@ export default function InvoiceEditor() {
     setTemplateType(targetType);
     if (!id) {
       if (targetType === "quotation") {
-        setInvoiceNumber(quotationSeq);
+        setInvoiceNumber(quotationSeq || "1");
       } else {
-        setInvoiceNumber(invoiceSeq);
+        setInvoiceNumber(invoiceSeq || "1");
       }
     }
   };
@@ -183,6 +238,11 @@ export default function InvoiceEditor() {
   const [quotationNote, setQuotationNote] = useState("");
   const [showQuotationNote, setShowQuotationNote] = useState(true);
 
+  // Signature & Stamp State (per-invoice / quotation)
+  const [signatureUrl, setSignatureUrl] = useState("");
+  const [showSignature, setShowSignature] = useState(true);
+  const [signatoryTitle, setSignatoryTitle] = useState("");
+
   // Update quotation prefix whenever date changes (unless custom prefix was entered)
   useEffect(() => {
     if (id) return;
@@ -213,12 +273,20 @@ export default function InvoiceEditor() {
         const cd = localStorage.getItem(LS_DEALERS_KEY);
         if (cd) setPredefinedDealers(JSON.parse(cd));
         if (!id) {
-          const c = localStorage.getItem(LS_INV_SEQ);
-          const parsed = parseInt(c || "0", 10);
-          if (parsed >= 447) {
-            setInvoiceNumber(parsed.toString());
+          const isQuotation = searchParams.get("type") === "quotation" || templateType === "quotation";
+          if (isQuotation) {
+            const cQ = localStorage.getItem(LS_QUOTATION_SEQ);
+            const qVal = cQ && !isNaN(parseInt(cQ, 10)) ? cQ : "1";
+            setInvoiceNumber(qVal);
+            setQuotationSeq(qVal);
           } else {
-            setInvoiceNumber("447");
+            const cI = localStorage.getItem(LS_INV_SEQ);
+            const parsed = parseInt(cI || "0", 10);
+            const isIconEmail = (auth.currentUser?.email || "").toLowerCase().includes("icon");
+            const defaultStart = isIconEmail ? "447" : "1";
+            const iVal = parsed > 0 ? (isIconEmail && parsed < 447 ? "447" : parsed.toString()) : defaultStart;
+            setInvoiceNumber(iVal);
+            setInvoiceSeq(iVal);
           }
         }
       } catch (_) {}
@@ -233,6 +301,9 @@ export default function InvoiceEditor() {
           const profData = profSnap.data();
           setProfile(profData);
           setInvoicePhone(profData.phone || "");
+          if (!id) {
+            setSignatureUrl(profData.signature_url || "");
+          }
         }
       } catch (_) {} // not in cache yet — will load in phase 3
 
@@ -279,6 +350,9 @@ export default function InvoiceEditor() {
           const profData = profSnap.data();
           setProfile(profData);
           setInvoicePhone(profData.phone || "");
+          if (!id) {
+            setSignatureUrl((prev) => prev || profData.signature_url || "");
+          }
         }
 
         const qItems = query(collection(db, "predefined_items"), where("userId", "==", uid));
@@ -305,13 +379,15 @@ export default function InvoiceEditor() {
           snap.forEach(d => docsList.push(d.data()));
           setExistingDocs(docsList);
           
-          const quotationDocs = docsList.filter(d => d.template_type === "quotation");
-          const qSeq = (quotationDocs.length + 1).toString();
-          const iSeq = calcNextInvoiceNumber(docsList, profSnap.exists() ? profSnap.data() : profile);
+          const qSeq = calcNextQuotationNumber(docsList);
+          const iSeq = calcNextInvoiceNumber(docsList, auth.currentUser?.email);
           
           setQuotationSeq(qSeq);
           setInvoiceSeq(iSeq);
-          if (searchParams.get("type") !== "quotation" && templateType !== "quotation") {
+          const isQuotation = searchParams.get("type") === "quotation" || templateType === "quotation";
+          if (isQuotation) {
+            setInvoiceNumber(qSeq);
+          } else {
             setInvoiceNumber(iSeq);
           }
           try {
@@ -375,6 +451,11 @@ export default function InvoiceEditor() {
       setShowQuotationPayment(data.show_quotation_payment !== false);
       setQuotationNote(data.quotation_note || "");
       setShowQuotationNote(data.show_quotation_note !== false);
+      
+      // Signature & Stamp
+      setSignatureUrl(data.signature_url !== undefined ? data.signature_url : "");
+      setShowSignature(data.show_signature !== false);
+      setSignatoryTitle(data.signatory_title || "");
     };
 
     loadInitData();
@@ -399,15 +480,14 @@ export default function InvoiceEditor() {
         }
 
         if (templateType === "quotation") {
-          let quotationCount = 0;
-          snap.forEach((doc) => {
-            if (doc.data().template_type === "quotation") {
-              quotationCount++;
-            }
-          });
-          setInvoiceNumber((quotationCount + 1).toString());
+          const nextQNum = calcNextQuotationNumber(snap.docs);
+          setInvoiceNumber(nextQNum);
+          setQuotationSeq(nextQNum);
+          try {
+            localStorage.setItem(LS_QUOTATION_SEQ, nextQNum);
+          } catch (_) {}
         } else {
-          const nextNum = calcNextInvoiceNumber(snap.docs, profile);
+          const nextNum = calcNextInvoiceNumber(snap.docs, auth.currentUser?.email);
           setInvoiceNumber(nextNum);
           setInvoiceSeq(nextNum);
           try {
@@ -545,6 +625,20 @@ export default function InvoiceEditor() {
     setItems(list);
   };
 
+  const handleSignatureFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const b64 = await compressImage(file, 800, 400, 0.9);
+      setSignatureUrl(b64);
+      setShowSignature(true);
+      setToast({ message: "Signature stamp added!", type: "success" });
+    } catch (err) {
+      console.error("Signature processing error:", err);
+      setToast({ message: "Failed to load signature stamp image", type: "error" });
+    }
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -615,6 +709,9 @@ export default function InvoiceEditor() {
         show_quotation_payment: templateType === "quotation" ? showQuotationPayment : true,
         quotation_note: templateType === "quotation" ? quotationNote : "",
         show_quotation_note: templateType === "quotation" ? showQuotationNote : true,
+        signature_url: signatureUrl,
+        show_signature: showSignature,
+        signatory_title: signatoryTitle,
         updated_at: new Date().toISOString()
       };
 
@@ -653,6 +750,27 @@ export default function InvoiceEditor() {
       if (id) {
         // Edit mode
         await setDoc(doc(db, "invoices", id), finalPayload, { merge: true });
+
+        // If user edited to a higher sequence number, advance the sequence for future docs
+        try {
+          const savedNum = parseInt((invoiceNumber || "").toString().replace(/\D/g, ""), 10);
+          if (!isNaN(savedNum)) {
+            if (templateType === "quotation") {
+              const currentQSeq = parseInt(localStorage.getItem(LS_QUOTATION_SEQ) || "1", 10);
+              if (savedNum >= currentQSeq) {
+                localStorage.setItem(LS_QUOTATION_SEQ, (savedNum + 1).toString());
+                setQuotationSeq((savedNum + 1).toString());
+              }
+            } else {
+              const currentInvSeq = parseInt(localStorage.getItem(LS_INV_SEQ) || "447", 10);
+              if (savedNum >= currentInvSeq) {
+                localStorage.setItem(LS_INV_SEQ, (savedNum + 1).toString());
+                setInvoiceSeq((savedNum + 1).toString());
+              }
+            }
+          }
+        } catch (_) {}
+
         if (isOffline) {
           setToast({ message: "Updated offline — will sync when back online", type: "warning" });
           setTimeout(() => navigate("/"), 1800);
@@ -666,14 +784,21 @@ export default function InvoiceEditor() {
           created_at: new Date().toISOString()
         });
 
-        // Advance sequence cache so the next invoice is automatically incremented
-        if (templateType !== "quotation") {
-          try {
-            const savedNum = parseInt((invoiceNumber || "").toString().replace(/\D/g, ""), 10);
-            const nextSeq = (!isNaN(savedNum) ? Math.max(savedNum + 1, 447) : 447).toString();
-            localStorage.setItem(LS_INV_SEQ, nextSeq);
-          } catch (_) {}
-        }
+        // Advance sequence cache so the next invoice/quotation is automatically incremented from the highest number
+        try {
+          const savedNum = parseInt((invoiceNumber || "").toString().replace(/\D/g, ""), 10);
+          if (!isNaN(savedNum)) {
+            if (templateType === "quotation") {
+              const nextSeq = (savedNum + 1).toString();
+              localStorage.setItem(LS_QUOTATION_SEQ, nextSeq);
+              setQuotationSeq(nextSeq);
+            } else {
+              const nextSeq = Math.max(savedNum + 1, 447).toString();
+              localStorage.setItem(LS_INV_SEQ, nextSeq);
+              setInvoiceSeq(nextSeq);
+            }
+          }
+        } catch (_) {}
 
         if (isOffline) {
           try {
@@ -740,15 +865,22 @@ export default function InvoiceEditor() {
     quotation_payment: quotationPayment,
     show_quotation_payment: showQuotationPayment,
     quotation_note: quotationNote,
-    show_quotation_note: showQuotationNote
+    show_quotation_note: showQuotationNote,
+    signature_url: signatureUrl,
+    show_signature: showSignature,
+    signatory_title: signatoryTitle
   };
 
-  // Build org data override — merges saved profile with per-invoice phone and website toggle
+  // Build org data override — merges saved profile with per-invoice phone, website toggle, and signature
   const previewOrgData = profile ? {
     ...profile,
     phone: invoicePhone || profile.phone || "",
-    show_website: showWebsite
-  } : null;
+    show_website: showWebsite,
+    signature_url: signatureUrl || profile.signature_url || ""
+  } : {
+    name: "ICON SYSTEMS",
+    signature_url: signatureUrl || ""
+  };
 
   if (loading) {
     return (
@@ -1374,22 +1506,47 @@ export default function InvoiceEditor() {
                     position: "relative",
                     overflow: "visible"
                   }}>
-                    {items.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveItem(idx)}
-                        style={{
-                          position: "absolute",
-                          top: "12px",
-                          right: "12px",
-                          color: "var(--danger-color)",
-                          background: "transparent",
-                          padding: "4px"
-                        }}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    )}
+                    {/* Item Card Header with Item Number and Delete Button */}
+                    <div style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: "10px"
+                    }}>
+                      <span style={{
+                        fontSize: "11px",
+                        fontWeight: "700",
+                        color: "var(--accent-color)",
+                        letterSpacing: "0.5px",
+                        textTransform: "uppercase"
+                      }}>
+                        Item #{idx + 1}
+                      </span>
+                      {items.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveItem(idx)}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            padding: "4px 10px",
+                            borderRadius: "6px",
+                            backgroundColor: "rgba(239, 68, 68, 0.1)",
+                            border: "1px solid rgba(239, 68, 68, 0.3)",
+                            color: "var(--danger-color)",
+                            fontSize: "12px",
+                            fontWeight: "600",
+                            cursor: "pointer",
+                            transition: "all 0.15s ease"
+                          }}
+                          title="Delete this line item"
+                        >
+                          <Trash2 size={13} />
+                          <span>Delete</span>
+                        </button>
+                      )}
+                    </div>
 
                     <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "12px", position: "relative" }}>
                       <input
@@ -1614,6 +1771,38 @@ export default function InvoiceEditor() {
             <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "20px" }}>
               <label style={{ display: "block", marginBottom: "6px", fontSize: "12px", color: "var(--text-secondary)", fontWeight: "600" }}>INVOICE FOOTER NOTE</label>
               <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Terms, payments notices..." />
+            </div>
+
+            {/* ── Signature & Stamp Toggle ── */}
+            <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "20px" }}>
+              <label style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                padding: "12px 14px",
+                borderRadius: "10px",
+                border: "1px solid var(--border-color)",
+                backgroundColor: "var(--input-bg)",
+                cursor: "pointer",
+                userSelect: "none"
+              }}>
+                <input
+                  type="checkbox"
+                  checked={showSignature}
+                  onChange={(e) => setShowSignature(e.target.checked)}
+                  style={{ width: "18px", height: "18px", cursor: "pointer", accentColor: "var(--accent-color)" }}
+                />
+                <div>
+                  <span style={{ fontSize: "13px", fontWeight: "600", color: "var(--text-primary)" }}>
+                    🖋️ Include Signature & Stamp on {templateType === "quotation" ? "Quotation" : "Invoice"}
+                  </span>
+                  <p style={{ fontSize: "11px", color: "var(--text-secondary)", margin: "2px 0 0" }}>
+                    {showSignature
+                      ? "Signature stamp will be displayed in the signature area"
+                      : "Signature stamp will be hidden from this document"}
+                  </p>
+                </div>
+              </label>
             </div>
 
           </div>

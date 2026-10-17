@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { auth } from "../firebase";
 import { signOut } from "firebase/auth";
-import { LayoutDashboard, PlusCircle, Tag, Settings, LogOut, Receipt, X, Menu } from "lucide-react";
+import { LayoutDashboard, PlusCircle, Tag, Settings, LogOut, Receipt, X, Menu, FileSpreadsheet } from "lucide-react";
 
 export default function Sidebar({ userProfile }) {
   const navigate = useNavigate();
@@ -37,6 +37,7 @@ export default function Sidebar({ userProfile }) {
     { name: "Dashboard", path: "/", icon: <LayoutDashboard size={20} /> },
     { name: "Create Invoice", path: "/invoices/new", icon: <PlusCircle size={20} /> },
     { name: "Create Quotation", path: "/invoices/new?type=quotation", icon: <Receipt size={20} /> },
+    { name: "Monthly GST Report", path: "/gst-report", icon: <FileSpreadsheet size={20} /> },
     { name: "Manage Items", path: "/items", icon: <Tag size={20} /> },
     { name: "Org Profile Settings", path: "/settings", icon: <Settings size={20} /> },
   ];

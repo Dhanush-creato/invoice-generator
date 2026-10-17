@@ -13,6 +13,7 @@ import InvoiceDetails from "./pages/InvoiceDetails";
 import Items from "./pages/Items";
 import Settings from "./pages/Settings";
 import PublicInvoice from "./pages/PublicInvoice";
+import GstReport from "./pages/GstReport";
 import OfflineBanner from "./components/OfflineBanner";
 
 export default function App() {
@@ -127,6 +128,11 @@ export default function App() {
         <Route path="/settings" element={
           <ProtectedRoute>
             <Settings />
+          </ProtectedRoute>
+        } />
+        <Route path="/gst-report" element={
+          <ProtectedRoute>
+            <GstReport />
           </ProtectedRoute>
         } />
 

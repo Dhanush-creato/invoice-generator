@@ -67,3 +67,48 @@ export function formatDate(dateString) {
     return dateString;
   }
 }
+
+/**
+ * Compresses an image file (PNG / JPG / WebP) into an optimized base64 DataURL string.
+ * Preserves alpha transparency for PNG images so seals/stamps look crisp on invoices.
+ */
+export function compressImage(file, maxWidth = 800, maxHeight = 400, quality = 0.85) {
+  return new Promise((resolve, reject) => {
+    if (!file) return resolve("");
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const isPng = file.type === "image/png" || file.name?.toLowerCase().endsWith(".png");
+        const mimeType = isPng ? "image/png" : "image/jpeg";
+        resolve(canvas.toDataURL(mimeType, quality));
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+}
+

@@ -447,16 +447,22 @@ export default function QuotationTemplate({ invoiceData, orgData }) {
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
             {/* Signature Area */}
-            <div style={{ textAlign: 'center', minWidth: '160px' }}>
-              <div style={{ fontWeight: 'bold', fontSize: '12px' }}>For ICON SYSTEMS</div>
-              {org.signature_url ? (
-                <div style={{ height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '4px 0' }}>
-                  <img src={org.signature_url} alt="Signature Stamp" style={{ maxHeight: '48px', objectFit: 'contain' }} />
+            <div style={{ textAlign: 'center', minWidth: '160px', position: 'relative' }}>
+              <div style={{ fontWeight: 'bold', fontSize: '12px' }}>For {org.name || "ICON SYSTEMS"}</div>
+              {(invoiceData?.show_signature !== false && (invoiceData?.signature_url || org.signature_url)) ? (
+                <div style={{ height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '4px 0' }}>
+                  <img
+                    src={invoiceData?.signature_url || org.signature_url}
+                    alt="Signature Stamp"
+                    style={{ maxHeight: '52px', maxWidth: '150px', objectFit: 'contain' }}
+                  />
                 </div>
               ) : (
-                <div style={{ height: '48px' }}></div>
+                <div style={{ height: '52px' }}></div>
               )}
-              <div style={{ fontSize: '11px', fontWeight: 'bold', margin: '2px 0' }}>Proprietor</div>
+              <div style={{ fontSize: '11px', fontWeight: 'bold', margin: '2px 0' }}>
+                {invoiceData?.signatory_title || "Proprietor"}
+              </div>
             </div>
           </div>
         </div>

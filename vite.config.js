@@ -35,6 +35,7 @@ export default defineConfig({
         ]
       },
       workbox: {
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         // Cache all app assets with stale-while-revalidate strategy
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,woff2}'],
         runtimeCaching: [

@@ -448,14 +448,21 @@ export default function Template2({ invoiceData, orgData }) {
           </div>
 
           {/* Authorised Signatory */}
-          <div style={{ flex: 0.8, padding: '6px 8px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-end', position: 'relative' }}>
+          <div style={{ flex: 0.8, padding: '6px 8px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-end', position: 'relative', minHeight: '90px' }}>
             <div style={{ fontSize: '14px', fontWeight: 'bold' }}>for {org.name}</div>
             
-            {org.signature_url && (
-              <img src={org.signature_url} alt="Authorized Signature" className="invoice-signature" style={{ maxHeight: '55px', position: 'absolute', bottom: '25px', right: '25px', opacity: 0.9 }} />
+            {(invoiceData?.show_signature !== false && (invoiceData?.signature_url || org.signature_url)) && (
+              <img
+                src={invoiceData?.signature_url || org.signature_url}
+                alt="Authorized Signature"
+                className="invoice-signature"
+                style={{ maxHeight: '58px', maxWidth: '140px', objectFit: 'contain', position: 'absolute', bottom: '22px', right: '15px', opacity: 0.95 }}
+              />
             )}
             
-            <div style={{ marginTop: 'auto', fontWeight: 'bold', fontSize: '12px' }}>Authorised Signatory</div>
+            <div style={{ marginTop: 'auto', fontWeight: 'bold', fontSize: '12px' }}>
+              {invoiceData?.signatory_title || "Authorised Signatory"}
+            </div>
           </div>
         </div>
 

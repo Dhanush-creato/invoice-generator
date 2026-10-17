@@ -8,7 +8,7 @@ export default function Template1({ invoiceData, orgData }) {
 
   const {
     id = "",
-    invoice_number = "447",
+    invoice_number = "",
     date = new Date().toISOString().split('t')[0],
     customer_name = "",
     customer_address = "",
@@ -374,15 +374,22 @@ export default function Template1({ invoiceData, orgData }) {
             </div>
 
             {/* Authorised Signature */}
-            <div style={{ flex: 0.8, padding: '8px 8px 15px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
+            <div style={{ flex: 0.8, padding: '8px 8px 15px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', position: 'relative', minHeight: '90px' }}>
               <div style={{ fontWeight: 'bold', fontSize: '13px' }}>For {org.name}</div>
 
-              {/* Signature image if uploaded in settings */}
-              {org.signature_url && (
-                <img src={org.signature_url} alt="Signature Stamp" className="invoice-signature" style={{ maxHeight: '55px', position: 'absolute', top: '25px', opacity: 0.85 }} />
+              {/* Signature image if uploaded/enabled */}
+              {(invoiceData?.show_signature !== false && (invoiceData?.signature_url || org.signature_url)) && (
+                <img
+                  src={invoiceData?.signature_url || org.signature_url}
+                  alt="Signature Stamp"
+                  className="invoice-signature"
+                  style={{ maxHeight: '58px', maxWidth: '140px', objectFit: 'contain', position: 'absolute', top: '22px', opacity: 0.95 }}
+                />
               )}
 
-              <div style={{ fontWeight: 'bold', marginTop: 'auto', textAlign: 'center', fontSize: '9.5px' }}>Proprietor</div>
+              <div style={{ fontWeight: 'bold', marginTop: 'auto', textAlign: 'center', fontSize: '9.5px' }}>
+                {invoiceData?.signatory_title || "Proprietor"}
+              </div>
             </div>
           </div>
 
