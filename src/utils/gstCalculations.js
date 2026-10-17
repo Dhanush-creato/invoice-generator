@@ -258,6 +258,51 @@ export function getDateRangeForMonth(financialYear, monthIndex) {
 }
 
 /**
+ * Normalizes different date formats (ISO, DD/MM/YYYY, DD-MM-YYYY, Firestore timestamps) into 'YYYY-MM-DD'
+ */
+export function normalizeDate(dateVal) {
+  if (!dateVal) return "";
+  if (typeof dateVal === "object") {
+    if (dateVal.toDate && typeof dateVal.toDate === "function") {
+      return dateVal.toDate().toISOString().split("T")[0];
+    }
+    if (dateVal.seconds) {
+      return new Date(dateVal.seconds * 1000).toISOString().split("T")[0];
+    }
+    if (dateVal instanceof Date && !isNaN(dateVal.getTime())) {
+      return dateVal.toISOString().split("T")[0];
+    }
+  }
+  const str = String(dateVal).trim();
+  if (!str) return "";
+
+  // Check DD/MM/YYYY or DD-MM-YYYY
+  const dmyMatch = str.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  if (dmyMatch) {
+    const day = dmyMatch[1].padStart(2, "0");
+    const month = dmyMatch[2].padStart(2, "0");
+    const year = dmyMatch[3];
+    return `${year}-${month}-${day}`;
+  }
+
+  // Check YYYY-MM-DD or YYYY/MM/DD
+  const ymdMatch = str.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
+  if (ymdMatch) {
+    const year = ymdMatch[1];
+    const month = ymdMatch[2].padStart(2, "0");
+    const day = ymdMatch[3].padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  const parsed = new Date(str);
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toISOString().split("T")[0];
+  }
+
+  return str.split("T")[0];
+}
+
+/**
  * Filters invoices by selected date range (fromDate & toDate) or financial year and month
  */
 export function filterInvoices(invoices, optionsOrFY, maybeMonthIndex) {
@@ -284,8 +329,8 @@ export function filterInvoices(invoices, optionsOrFY, maybeMonthIndex) {
     // Strictly exclude quotations
     if (inv.template_type === "quotation") return false;
 
-    if (!inv.date) return false;
-    const invDate = String(inv.date).trim().split("T")[0]; // YYYY-MM-DD
+    const invDate = normalizeDate(inv.date);
+    if (!invDate) return false;
 
     if (fromDate && invDate < fromDate) return false;
     if (toDate && invDate > toDate) return false;

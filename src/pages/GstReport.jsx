@@ -327,11 +327,12 @@ export default function GstReport() {
                         fontWeight: "600",
                         border: "none",
                         backgroundColor: "transparent",
-                        color: "var(--text-primary)"
+                        color: "var(--text-primary)",
+                        cursor: "pointer"
                       }}
                     >
                       {availableFYs.map((fy) => (
-                        <option key={fy} value={fy} style={{ backgroundColor: "#0f172a", color: "#fff" }}>FY {fy}</option>
+                        <option key={fy} value={fy} style={{ backgroundColor: "var(--bg-secondary)", color: "var(--text-primary)" }}>FY {fy}</option>
                       ))}
                     </select>
                   </div>
@@ -351,7 +352,7 @@ export default function GstReport() {
                       display: "flex",
                       alignItems: "center",
                       gap: "8px",
-                      backgroundColor: "rgba(10, 15, 29, 0.95)",
+                      backgroundColor: "var(--input-bg)",
                       border: "1.5px solid var(--accent-color)",
                       borderRadius: "8px",
                       padding: "4px 10px",
@@ -359,7 +360,7 @@ export default function GstReport() {
                       cursor: "pointer"
                     }}
                   >
-                    <Calendar size={17} style={{ color: "#38bdf8", flexShrink: 0 }} />
+                    <Calendar size={17} style={{ color: "var(--accent-color)", flexShrink: 0 }} />
                     <input
                       type="date"
                       className="gst-date-input"
@@ -375,7 +376,6 @@ export default function GstReport() {
                         border: "none",
                         backgroundColor: "transparent",
                         color: "var(--text-primary)",
-                        colorScheme: "dark",
                         width: "100%",
                         cursor: "pointer"
                       }}
@@ -397,7 +397,7 @@ export default function GstReport() {
                       display: "flex",
                       alignItems: "center",
                       gap: "8px",
-                      backgroundColor: "rgba(10, 15, 29, 0.95)",
+                      backgroundColor: "var(--input-bg)",
                       border: "1.5px solid var(--accent-color)",
                       borderRadius: "8px",
                       padding: "4px 10px",
@@ -405,7 +405,7 @@ export default function GstReport() {
                       cursor: "pointer"
                     }}
                   >
-                    <Calendar size={17} style={{ color: "#38bdf8", flexShrink: 0 }} />
+                    <Calendar size={17} style={{ color: "var(--accent-color)", flexShrink: 0 }} />
                     <input
                       type="date"
                       className="gst-date-input"
@@ -421,7 +421,6 @@ export default function GstReport() {
                         border: "none",
                         backgroundColor: "transparent",
                         color: "var(--text-primary)",
-                        colorScheme: "dark",
                         width: "100%",
                         cursor: "pointer"
                       }}
@@ -459,13 +458,14 @@ export default function GstReport() {
                 type="button"
                 onClick={() => handlePreset("full_fy")}
                 style={{
-                  padding: "5px 12px",
+                  padding: "6px 12px",
                   borderRadius: "6px",
                   fontSize: "12px",
                   fontWeight: "600",
-                  backgroundColor: "rgba(255,255,255,0.06)",
+                  backgroundColor: "var(--input-bg)",
                   color: "var(--text-primary)",
-                  border: "1px solid var(--border-color)"
+                  border: "1px solid var(--border-color)",
+                  cursor: "pointer"
                 }}
               >
                 Full FY (12 Months)
@@ -474,13 +474,14 @@ export default function GstReport() {
                 type="button"
                 onClick={() => handlePreset("q1")}
                 style={{
-                  padding: "5px 12px",
+                  padding: "6px 12px",
                   borderRadius: "6px",
                   fontSize: "12px",
                   fontWeight: "600",
-                  backgroundColor: "rgba(255,255,255,0.06)",
+                  backgroundColor: "var(--input-bg)",
                   color: "var(--text-primary)",
-                  border: "1px solid var(--border-color)"
+                  border: "1px solid var(--border-color)",
+                  cursor: "pointer"
                 }}
               >
                 Q1 (Apr - Jun)
@@ -489,13 +490,14 @@ export default function GstReport() {
                 type="button"
                 onClick={() => handlePreset("q2")}
                 style={{
-                  padding: "5px 12px",
+                  padding: "6px 12px",
                   borderRadius: "6px",
                   fontSize: "12px",
                   fontWeight: "600",
-                  backgroundColor: "rgba(255,255,255,0.06)",
+                  backgroundColor: "var(--input-bg)",
                   color: "var(--text-primary)",
-                  border: "1px solid var(--border-color)"
+                  border: "1px solid var(--border-color)",
+                  cursor: "pointer"
                 }}
               >
                 Q2 (Jul - Sep)
@@ -504,13 +506,14 @@ export default function GstReport() {
                 type="button"
                 onClick={() => handlePreset("q3")}
                 style={{
-                  padding: "5px 12px",
+                  padding: "6px 12px",
                   borderRadius: "6px",
                   fontSize: "12px",
                   fontWeight: "600",
-                  backgroundColor: "rgba(255,255,255,0.06)",
+                  backgroundColor: "var(--input-bg)",
                   color: "var(--text-primary)",
-                  border: "1px solid var(--border-color)"
+                  border: "1px solid var(--border-color)",
+                  cursor: "pointer"
                 }}
               >
                 Q3 (Oct - Dec)
@@ -519,13 +522,14 @@ export default function GstReport() {
                 type="button"
                 onClick={() => handlePreset("q4")}
                 style={{
-                  padding: "5px 12px",
+                  padding: "6px 12px",
                   borderRadius: "6px",
                   fontSize: "12px",
                   fontWeight: "600",
-                  backgroundColor: "rgba(255,255,255,0.06)",
+                  backgroundColor: "var(--input-bg)",
                   color: "var(--text-primary)",
-                  border: "1px solid var(--border-color)"
+                  border: "1px solid var(--border-color)",
+                  cursor: "pointer"
                 }}
               >
                 Q4 (Jan - Mar)
@@ -534,13 +538,14 @@ export default function GstReport() {
                 type="button"
                 onClick={() => handlePreset("last_30")}
                 style={{
-                  padding: "5px 12px",
+                  padding: "6px 12px",
                   borderRadius: "6px",
                   fontSize: "12px",
                   fontWeight: "600",
-                  backgroundColor: "rgba(255,255,255,0.06)",
+                  backgroundColor: "var(--input-bg)",
                   color: "var(--text-primary)",
-                  border: "1px solid var(--border-color)"
+                  border: "1px solid var(--border-color)",
+                  cursor: "pointer"
                 }}
               >
                 Last 30 Days
@@ -564,7 +569,8 @@ export default function GstReport() {
                 scrollbarWidth: "none",
                 gap: "8px",
                 padding: "8px 6px",
-                backgroundColor: "rgba(0,0,0,0.2)",
+                backgroundColor: "var(--input-bg)",
+                border: "1px solid var(--border-color)",
                 borderRadius: "10px"
               }}>
                 {FY_MONTHS.map((m) => {
@@ -581,7 +587,7 @@ export default function GstReport() {
                         padding: "9px 6px",
                         borderRadius: "8px",
                         textAlign: "center",
-                        backgroundColor: isSelected ? "var(--accent-color)" : "rgba(255, 255, 255, 0.04)",
+                        backgroundColor: isSelected ? "var(--accent-color)" : "transparent",
                         color: isSelected ? "#ffffff" : "var(--text-secondary)",
                         fontWeight: isSelected ? "700" : "500",
                         fontSize: "13px",
@@ -1024,47 +1030,118 @@ export default function GstReport() {
                     </thead>
                     <tbody>
                       {b2cItemsGrouped.length > 0 ? (
-                        b2cItemsGrouped.map((it, idx) => (
-                          <tr key={idx} style={{ borderBottom: "1px solid #f0f0f0" }}>
-                            <td style={{ padding: "6px" }}>{it.hsn_code || "Misc"}</td>
-                            <td style={{ textAlign: "right", padding: "6px" }}>{it.quantity}</td>
-                            <td style={{ textAlign: "right", padding: "6px" }}>{formatINR(it.rate)}</td>
-                            <td style={{ textAlign: "right", padding: "6px" }}>{formatINR(it.taxableValue)}</td>
-                            <td style={{ textAlign: "right", padding: "6px" }}>{formatINR(it.sgstAmount)}</td>
-                            <td style={{ textAlign: "right", padding: "6px" }}>{formatINR(it.cgstAmount)}</td>
-                            <td style={{ textAlign: "right", padding: "6px", fontWeight: "500" }}>{formatINR(it.total)}</td>
+                        <>
+                          {b2cItemsGrouped.map((it, idx) => (
+                            <tr key={idx} style={{ borderBottom: "1px solid #f0f0f0" }}>
+                              <td style={{ padding: "6px" }}>{it.hsn_code || "Misc"}</td>
+                              <td style={{ textAlign: "right", padding: "6px" }}>{it.quantity}</td>
+                              <td style={{ textAlign: "right", padding: "6px" }}>{formatINR(it.rate)}</td>
+                              <td style={{ textAlign: "right", padding: "6px" }}>{formatINR(it.taxableValue)}</td>
+                              <td style={{ textAlign: "right", padding: "6px" }}>{formatINR(it.sgstAmount)}</td>
+                              <td style={{ textAlign: "right", padding: "6px" }}>{formatINR(it.cgstAmount)}</td>
+                              <td style={{ textAlign: "right", padding: "6px", fontWeight: "500" }}>{formatINR(it.total)}</td>
+                            </tr>
+                          ))}
+                          {/* Total B2C Subtotal Row (Green) */}
+                          <tr style={{ color: "#385723", fontWeight: "bold", borderTop: "2px solid #ccc", backgroundColor: "#e2efda" }}>
+                            <td style={{ padding: "8px 6px" }}>Total B2C</td>
+                            <td style={{ textAlign: "right", padding: "8px 6px" }}>
+                              {b2cItemsGrouped.reduce((s, it) => s + it.quantity, 0)}
+                            </td>
+                            <td style={{ textAlign: "right", padding: "8px 6px" }}>-</td>
+                            <td style={{ textAlign: "right", padding: "8px 6px" }}>
+                              {formatINR(b2cItemsGrouped.reduce((s, it) => s + it.taxableValue, 0))}
+                            </td>
+                            <td style={{ textAlign: "right", padding: "8px 6px" }}>
+                              {formatINR(b2cItemsGrouped.reduce((s, it) => s + it.sgstAmount, 0))}
+                            </td>
+                            <td style={{ textAlign: "right", padding: "8px 6px" }}>
+                              {formatINR(b2cItemsGrouped.reduce((s, it) => s + it.cgstAmount, 0))}
+                            </td>
+                            <td style={{ textAlign: "right", padding: "8px 6px" }}>
+                              {formatINR(b2cItemsGrouped.reduce((s, it) => s + it.total, 0))}
+                            </td>
                           </tr>
-                        ))
+                          {/* Grand Total (B2B + B2C) Row */}
+                          <tr style={{ color: "#ff0000", fontWeight: "bold", borderTop: "2px solid #b91c1c", backgroundColor: "#fff8dc" }}>
+                            <td style={{ padding: "9px 6px", fontSize: "13px" }}>Grand Total (B2B + B2C)</td>
+                            <td style={{ textAlign: "right", padding: "9px 6px", color: "#7030a0", fontSize: "13px" }}>
+                              {b2bItemsGrouped.reduce((s, it) => s + it.quantity, 0) + b2cItemsGrouped.reduce((s, it) => s + it.quantity, 0)}
+                            </td>
+                            <td style={{ textAlign: "right", padding: "9px 6px" }}>-</td>
+                            <td style={{ textAlign: "right", padding: "9px 6px", fontSize: "13px" }}>
+                              {formatINR((reportData.summary.b2b.taxable || 0) + (reportData.summary.b2c.taxable || 0))}
+                            </td>
+                            <td style={{ textAlign: "right", padding: "9px 6px", fontSize: "13px" }}>
+                              {formatINR((reportData.summary.b2b.sgst || 0) + (reportData.summary.b2c.sgst || 0))}
+                            </td>
+                            <td style={{ textAlign: "right", padding: "9px 6px", fontSize: "13px" }}>
+                              {formatINR((reportData.summary.b2b.cgst || 0) + (reportData.summary.b2c.cgst || 0))}
+                            </td>
+                            <td style={{ textAlign: "right", padding: "9px 6px", fontSize: "13px" }}>
+                              {formatINR((reportData.summary.b2b.total || 0) + (reportData.summary.b2c.total || 0))}
+                            </td>
+                          </tr>
+                        </>
                       ) : (
-                        <tr>
-                          <td colSpan="7" style={{ textAlign: "center", padding: "16px", color: "#94a3b8", fontStyle: "italic" }}>
-                            No B2C items in this period
-                          </td>
-                        </tr>
+                        <>
+                          <tr>
+                            <td colSpan="7" style={{ textAlign: "center", padding: "16px", color: "#94a3b8", fontStyle: "italic" }}>
+                              No B2C items in this period
+                            </td>
+                          </tr>
+                          {/* Grand Total (B2B + B2C) Row even when B2C is empty */}
+                          <tr style={{ color: "#ff0000", fontWeight: "bold", borderTop: "2px solid #b91c1c", backgroundColor: "#fff8dc" }}>
+                            <td style={{ padding: "9px 6px", fontSize: "13px" }}>Grand Total (B2B + B2C)</td>
+                            <td style={{ textAlign: "right", padding: "9px 6px", color: "#7030a0", fontSize: "13px" }}>
+                              {b2bItemsGrouped.reduce((s, it) => s + it.quantity, 0)}
+                            </td>
+                            <td style={{ textAlign: "right", padding: "9px 6px" }}>-</td>
+                            <td style={{ textAlign: "right", padding: "9px 6px", fontSize: "13px" }}>
+                              {formatINR(reportData.summary.b2b.taxable || 0)}
+                            </td>
+                            <td style={{ textAlign: "right", padding: "9px 6px", fontSize: "13px" }}>
+                              {formatINR(reportData.summary.b2b.sgst || 0)}
+                            </td>
+                            <td style={{ textAlign: "right", padding: "9px 6px", fontSize: "13px" }}>
+                              {formatINR(reportData.summary.b2b.cgst || 0)}
+                            </td>
+                            <td style={{ textAlign: "right", padding: "9px 6px", fontSize: "13px" }}>
+                              {formatINR(reportData.summary.b2b.total || 0)}
+                            </td>
+                          </tr>
+                        </>
                       )}
                     </tbody>
                   </table>
                 </div>
               </div>
 
-              {/* Total B2C Highlight Bar (Green) */}
+              {/* Grand Total Combined Highlight Banner */}
               <div style={{
-                backgroundColor: "#e2efda",
-                color: "#385723",
-                padding: "8px 16px",
-                borderRadius: "4px",
+                backgroundColor: "rgba(59, 130, 246, 0.08)",
+                border: "1.5px solid var(--accent-color)",
+                borderRadius: "8px",
+                padding: "12px 20px",
+                marginTop: "16px",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                fontWeight: "bold",
-                fontSize: "13px"
+                flexWrap: "wrap",
+                gap: "12px",
+                color: "var(--text-primary)"
               }}>
-                <span>Total B2C</span>
-                <div style={{ display: "flex", gap: "24px" }}>
-                  <span>Taxable: {formatINR(reportData.summary.b2c.taxable)}</span>
-                  <span>SGST: {formatINR(reportData.summary.b2c.sgst)}</span>
-                  <span>CGST: {formatINR(reportData.summary.b2c.cgst)}</span>
-                  <span>Total: {formatINR(reportData.summary.b2c.total)}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <CheckCircle2 size={18} style={{ color: "var(--accent-color)" }} />
+                  <span style={{ fontWeight: "700", fontSize: "14px" }}>Grand Total (B2B + B2C)</span>
+                </div>
+                <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", fontSize: "13px" }}>
+                  <span>Taxable: <strong>{formatINR((reportData.summary.b2b.taxable || 0) + (reportData.summary.b2c.taxable || 0))}</strong></span>
+                  <span>SGST: <strong style={{ color: "#f97316" }}>{formatINR((reportData.summary.b2b.sgst || 0) + (reportData.summary.b2c.sgst || 0))}</strong></span>
+                  <span>CGST: <strong style={{ color: "#ef4444" }}>{formatINR((reportData.summary.b2b.cgst || 0) + (reportData.summary.b2c.cgst || 0))}</strong></span>
+                  <span style={{ color: "var(--accent-color)", fontWeight: "800", fontSize: "14px" }}>
+                    Total: {formatINR((reportData.summary.b2b.total || 0) + (reportData.summary.b2c.total || 0))}
+                  </span>
                 </div>
               </div>
             </div>

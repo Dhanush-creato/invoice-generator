@@ -393,25 +393,69 @@ export async function exportGstExcelReport(reportData, businessProfile) {
   wsTemplate.getCell(`H${b2cSubtotalRow}`).fill = greenFill;
   wsTemplate.getCell(`H${b2cSubtotalRow}`).numFmt = NUM_FMT_INR;
 
-  // Bottom-Left Combined Total (B2B + B2C)
+  // Dedicated Grand Total (B2B + B2C) Row across table
+  const grandTotalRow = b2cSubtotalRow + 1;
+  const grandTotalFont = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: COLOR_RED } };
+  const grandTotalFill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFF2CC" } };
+
+  wsTemplate.getCell(`B${grandTotalRow}`).value = "Grand Total (B2B + B2C)";
+  wsTemplate.getCell(`B${grandTotalRow}`).font = grandTotalFont;
+  wsTemplate.getCell(`B${grandTotalRow}`).fill = grandTotalFill;
+
+  wsTemplate.getCell(`C${grandTotalRow}`).value = subtotalB2BQty + subtotalB2CQty;
+  wsTemplate.getCell(`C${grandTotalRow}`).font = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: COLOR_PURPLE } };
+  wsTemplate.getCell(`C${grandTotalRow}`).fill = grandTotalFill;
+
+  wsTemplate.getCell(`D${grandTotalRow}`).fill = grandTotalFill;
+
+  wsTemplate.getCell(`E${grandTotalRow}`).value = subtotalB2BTaxable + subtotalB2CTaxable;
+  wsTemplate.getCell(`E${grandTotalRow}`).font = grandTotalFont;
+  wsTemplate.getCell(`E${grandTotalRow}`).fill = grandTotalFill;
+  wsTemplate.getCell(`E${grandTotalRow}`).numFmt = NUM_FMT_INR;
+
+  wsTemplate.getCell(`F${grandTotalRow}`).value = subtotalB2BSgst + subtotalB2CSgst;
+  wsTemplate.getCell(`F${grandTotalRow}`).font = grandTotalFont;
+  wsTemplate.getCell(`F${grandTotalRow}`).fill = grandTotalFill;
+  wsTemplate.getCell(`F${grandTotalRow}`).numFmt = NUM_FMT_INR;
+
+  wsTemplate.getCell(`G${grandTotalRow}`).value = subtotalB2BCgst + subtotalB2CCgst;
+  wsTemplate.getCell(`G${grandTotalRow}`).font = grandTotalFont;
+  wsTemplate.getCell(`G${grandTotalRow}`).fill = grandTotalFill;
+  wsTemplate.getCell(`G${grandTotalRow}`).numFmt = NUM_FMT_INR;
+
+  wsTemplate.getCell(`H${grandTotalRow}`).value = subtotalB2BTotal + subtotalB2CTotal;
+  wsTemplate.getCell(`H${grandTotalRow}`).font = grandTotalFont;
+  wsTemplate.getCell(`H${grandTotalRow}`).fill = grandTotalFill;
+  wsTemplate.getCell(`H${grandTotalRow}`).numFmt = NUM_FMT_INR;
+
+  // Bottom-Left Combined Total Box (B2B + B2C) on Column A (4 complete rows with Grand Total)
   const totalTaxableCombined = (summary.b2b?.taxable || 0) + (summary.b2c?.taxable || 0);
   const totalSgstCombined = (summary.b2b?.sgst || 0) + (summary.b2c?.sgst || 0);
   const totalCgstCombined = (summary.b2b?.cgst || 0) + (summary.b2c?.cgst || 0);
+  const totalAmountCombined = (summary.b2b?.total || 0) + (summary.b2c?.total || 0);
 
-  const bottomBoxRow = Math.max(b2cSubtotalRow, 30);
-  wsTemplate.getCell(`A${bottomBoxRow - 3}`).value = "Total (B2B + B2C)";
-  wsTemplate.getCell(`A${bottomBoxRow - 3}`).font = { name: FONT_FAMILY, size: 9.5, bold: true, color: { argb: COLOR_PURPLE } };
+  const bottomBoxRow = Math.max(grandTotalRow + 1, 30);
+  wsTemplate.getCell(`A${bottomBoxRow - 4}`).value = "Total (B2B + B2C)";
+  wsTemplate.getCell(`A${bottomBoxRow - 4}`).font = { name: FONT_FAMILY, size: 9.5, bold: true, color: { argb: COLOR_PURPLE } };
 
-  wsTemplate.getCell(`A${bottomBoxRow - 2}`).value = totalTaxableCombined;
+  wsTemplate.getCell(`A${bottomBoxRow - 3}`).value = totalTaxableCombined;
+  wsTemplate.getCell(`A${bottomBoxRow - 3}`).font = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: COLOR_RED } };
+  wsTemplate.getCell(`A${bottomBoxRow - 3}`).fill = yellowFill;
+  wsTemplate.getCell(`A${bottomBoxRow - 3}`).numFmt = NUM_FMT_INR;
+
+  wsTemplate.getCell(`A${bottomBoxRow - 2}`).value = totalSgstCombined;
   wsTemplate.getCell(`A${bottomBoxRow - 2}`).font = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: COLOR_RED } };
+  wsTemplate.getCell(`A${bottomBoxRow - 2}`).fill = yellowFill;
   wsTemplate.getCell(`A${bottomBoxRow - 2}`).numFmt = NUM_FMT_INR;
 
-  wsTemplate.getCell(`A${bottomBoxRow - 1}`).value = totalSgstCombined;
+  wsTemplate.getCell(`A${bottomBoxRow - 1}`).value = totalCgstCombined;
   wsTemplate.getCell(`A${bottomBoxRow - 1}`).font = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: COLOR_RED } };
+  wsTemplate.getCell(`A${bottomBoxRow - 1}`).fill = yellowFill;
   wsTemplate.getCell(`A${bottomBoxRow - 1}`).numFmt = NUM_FMT_INR;
 
-  wsTemplate.getCell(`A${bottomBoxRow}`).value = totalCgstCombined;
+  wsTemplate.getCell(`A${bottomBoxRow}`).value = totalAmountCombined;
   wsTemplate.getCell(`A${bottomBoxRow}`).font = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: COLOR_RED } };
+  wsTemplate.getCell(`A${bottomBoxRow}`).fill = yellowFill;
   wsTemplate.getCell(`A${bottomBoxRow}`).numFmt = NUM_FMT_INR;
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
