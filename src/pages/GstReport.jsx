@@ -365,6 +365,11 @@ export default function GstReport() {
                       type="date"
                       className="gst-date-input"
                       value={fromDate}
+                      onClick={(e) => {
+                        if (typeof e.target.showPicker === "function") {
+                          try { e.target.showPicker(); } catch (_) {}
+                        }
+                      }}
                       onChange={(e) => {
                         setFromDate(e.target.value);
                         setSelectedMonth(null);
@@ -377,7 +382,8 @@ export default function GstReport() {
                         backgroundColor: "transparent",
                         color: "var(--text-primary)",
                         width: "100%",
-                        cursor: "pointer"
+                        cursor: "pointer",
+                        outline: "none"
                       }}
                     />
                   </div>
@@ -410,6 +416,11 @@ export default function GstReport() {
                       type="date"
                       className="gst-date-input"
                       value={toDate}
+                      onClick={(e) => {
+                        if (typeof e.target.showPicker === "function") {
+                          try { e.target.showPicker(); } catch (_) {}
+                        }
+                      }}
                       onChange={(e) => {
                         setToDate(e.target.value);
                         setSelectedMonth(null);
@@ -422,7 +433,8 @@ export default function GstReport() {
                         backgroundColor: "transparent",
                         color: "var(--text-primary)",
                         width: "100%",
-                        cursor: "pointer"
+                        cursor: "pointer",
+                        outline: "none"
                       }}
                     />
                   </div>
@@ -1320,7 +1332,7 @@ export default function GstReport() {
                     const totalTax = h.cgstAmount + h.sgstAmount + h.igstAmount;
                     return (
                       <tr key={idx} style={{ borderBottom: "1px solid var(--border-color)" }}>
-                        <td style={{ padding: "10px", fontWeight: "700" }}>{h.hsn_code}</td>
+                        <td style={{ padding: "10px", fontWeight: "700" }}>{h.hsn_code || "Misc"}</td>
                         <td style={{ padding: "10px" }}>{h.description}</td>
                         <td style={{ textAlign: "right", padding: "10px", fontWeight: "600" }}>{formatINR(h.rate)}</td>
                         <td style={{ textAlign: "right", padding: "10px", fontWeight: "600" }}>{h.quantity}</td>

@@ -509,11 +509,13 @@ export function aggregateGstReport(invoices, sellerProfile, optionsOrFY, maybeMo
   const processLineItem = (item, inv, targetMap) => {
     const calc = calculateLineItemGst(item, inv, sellerProfile);
     const itemRate = Number(calc.rate) || 0;
-    const key = `${calc.hsn_code || "N/A"}_${itemRate}_${calc.totalTaxRate}`;
+    const rawHsn = String(calc.hsn_code || item.hsn_code || "").trim();
+    const hsnCode = (rawHsn && rawHsn !== "undefined" && rawHsn !== "null" && rawHsn !== "N/A") ? rawHsn : "Misc";
+    const key = `${hsnCode}_${itemRate}_${calc.totalTaxRate}`;
 
     const existing = targetMap.get(key) || {
-      hsn_code: calc.hsn_code || "N/A",
-      description: item.description || "Goods / Services",
+      hsn_code: hsnCode,
+      description: item.description || (hsnCode === "Misc" ? "Miscellaneous / Unclassified" : "Goods / Services"),
       taxRate: calc.totalTaxRate,
       rate: itemRate,
       quantity: 0,

@@ -116,6 +116,24 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   background-color: rgba(0, 0, 0, 0.08) !important;
 }
 
+/* Custom GST Date inputs with dedicated Lucide calendar icon: Hide redundant browser native icon */
+.gst-date-input::-webkit-calendar-picker-indicator {
+  display: none !important;
+  -webkit-appearance: none !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  pointer-events: none !important;
+}
+
+.gst-date-input::-webkit-inner-spin-button,
+.gst-date-input::-webkit-clear-button {
+  display: none !important;
+  -webkit-appearance: none !important;
+}
+
 input::placeholder, textarea::placeholder {
   color: var(--text-secondary);
   opacity: 0.6;

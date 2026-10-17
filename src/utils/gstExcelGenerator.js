@@ -17,7 +17,8 @@ export function groupByHsnAndRate(items) {
   const map = new Map();
 
   items.forEach((it) => {
-    const hsnStr = String(it.hsn_code || "").trim();
+    const rawHsn = String(it.hsn_code || "").trim();
+    const hsnStr = (rawHsn && rawHsn !== "undefined" && rawHsn !== "null" && rawHsn !== "N/A") ? rawHsn : "Misc";
     const rateNum = Number(it.rate) || 0;
     // Key = HSN + "||" + Rate
     const key = `${hsnStr}||${rateNum}`;
@@ -200,7 +201,7 @@ export async function exportGstExcelReport(reportData, businessProfile) {
   let subtotalB2BTotal = 0;
 
   b2bItems.forEach((it) => {
-    wsTemplate.getCell(`B${currentRow}`).value = it.hsn_code;
+    wsTemplate.getCell(`B${currentRow}`).value = it.hsn_code || "Misc";
     wsTemplate.getCell(`C${currentRow}`).value = it.quantity;
     wsTemplate.getCell(`D${currentRow}`).value = it.rate;
     wsTemplate.getCell(`E${currentRow}`).value = it.taxableValue;
@@ -333,7 +334,7 @@ export async function exportGstExcelReport(reportData, businessProfile) {
   let subtotalB2CTotal = 0;
 
   b2cItems.forEach((it) => {
-    wsTemplate.getCell(`B${currentB2cRow}`).value = it.hsn_code;
+    wsTemplate.getCell(`B${currentB2cRow}`).value = it.hsn_code || "Misc";
     wsTemplate.getCell(`C${currentB2cRow}`).value = it.quantity;
     wsTemplate.getCell(`D${currentB2cRow}`).value = it.rate;
     wsTemplate.getCell(`E${currentB2cRow}`).value = it.taxableValue;
@@ -501,7 +502,7 @@ export async function exportGstExcelReport(reportData, businessProfile) {
 
   b2bGrouped.forEach((it) => {
     const row = wsB2b.addRow({
-      hsn: it.hsn_code || "",
+      hsn: it.hsn_code || "Misc",
       desc: it.description || "",
       rate: it.rate,
       qty: it.quantity,
@@ -563,7 +564,7 @@ export async function exportGstExcelReport(reportData, businessProfile) {
 
   b2cGrouped.forEach((it) => {
     const row = wsB2c.addRow({
-      hsn: it.hsn_code || "",
+      hsn: it.hsn_code || "Misc",
       desc: it.description || "",
       rate: it.rate,
       qty: it.quantity,
@@ -590,7 +591,7 @@ export async function exportGstExcelReport(reportData, businessProfile) {
   const wsHsn = workbook.addWorksheet("HSN Summary");
   wsHsn.columns = [
     { header: "HSN / SAC Code", key: "hsn", width: 16 },
-    { header: "Description", key: "desc", width: 32 },
+    { header: "Description", key: "desc", width: 28 },
     { header: "Unit Rate (₹)", key: "rate", width: 14 },
     { header: "Total Quantity", key: "qty", width: 14 },
     { header: "UQC / Unit", key: "unit", width: 12 },
@@ -620,7 +621,7 @@ export async function exportGstExcelReport(reportData, businessProfile) {
     const totalTax = (hsnItem.cgstAmount || 0) + (hsnItem.sgstAmount || 0) + (hsnItem.igstAmount || 0);
     const taxRateDisplay = hsnItem.taxRate !== undefined ? hsnItem.taxRate : ((hsnItem.cgstRate || 0) + (hsnItem.sgstRate || 0) + (hsnItem.igstRate || 0));
     const row = wsHsn.addRow({
-      hsn: hsnItem.hsn_code,
+      hsn: hsnItem.hsn_code || "Misc",
       desc: hsnItem.description || "Goods / Services",
       rate: hsnItem.rate,
       qty: hsnItem.quantity,
