@@ -157,23 +157,13 @@ export default function GstReport() {
   }, [invoices, profile, fromDate, toDate, selectedFY, selectedMonth]);
 
   // Group items by (HSN + Rate) for on-screen Interactive Spreadsheet preview
-  const b2bControllerGrouped = useMemo(() => {
-    const raw = reportData.b2bInvoices.flatMap((inv) => inv.calculatedItems || []).filter((it) => String(it.hsn_code).trim() === "9032");
+  const b2bItemsGrouped = useMemo(() => {
+    const raw = reportData.b2bInvoices.flatMap((inv) => inv.calculatedItems || []);
     return groupByHsnAndRate(raw);
   }, [reportData.b2bInvoices]);
 
-  const b2bOtherGrouped = useMemo(() => {
-    const raw = reportData.b2bInvoices.flatMap((inv) => inv.calculatedItems || []).filter((it) => String(it.hsn_code).trim() !== "9032");
-    return groupByHsnAndRate(raw);
-  }, [reportData.b2bInvoices]);
-
-  const b2cControllerGrouped = useMemo(() => {
-    const raw = reportData.b2cInvoices.flatMap((inv) => inv.calculatedItems || []).filter((it) => String(it.hsn_code).trim() === "9032");
-    return groupByHsnAndRate(raw);
-  }, [reportData.b2cInvoices]);
-
-  const b2cOtherGrouped = useMemo(() => {
-    const raw = reportData.b2cInvoices.flatMap((inv) => inv.calculatedItems || []).filter((it) => String(it.hsn_code).trim() !== "9032");
+  const b2cItemsGrouped = useMemo(() => {
+    const raw = reportData.b2cInvoices.flatMap((inv) => inv.calculatedItems || []);
     return groupByHsnAndRate(raw);
   }, [reportData.b2cInvoices]);
 
@@ -891,21 +881,18 @@ export default function GstReport() {
                 {reportData.periodLabel}
               </div>
 
-              {/* Row 6: Controller & B2B Header */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                <div style={{ color: "#ff0000", fontWeight: "bold", fontSize: "16px" }}>
-                  Controller
-                </div>
-                <div style={{ color: "#ff0000", fontWeight: "bold", fontSize: "15px", marginRight: "45%" }}>
+              {/* Row 6: B2B Header */}
+              <div style={{ marginBottom: "12px" }}>
+                <span style={{ color: "#ff0000", fontWeight: "bold", fontSize: "16px" }}>
                   B2B
-                </div>
+                </span>
               </div>
 
-              {/* Side-by-side Tables: Left (Controller HSN 9032) + Right (Other HSNs) */}
-              <div style={{ display: "grid", gridTemplateColumns: "180px 1fr 1fr", gap: "16px", marginBottom: "24px" }}>
+              {/* B2B Section: Left Summary Box + Single Unified B2B Table */}
+              <div style={{ display: "grid", gridTemplateColumns: "180px 1fr", gap: "20px", marginBottom: "24px", alignItems: "start" }}>
                 
                 {/* Column A: Summary Box */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "4px", justifyContent: "center" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                   <div style={{ color: "#7030a0", fontWeight: "bold", fontSize: "14px", marginBottom: "4px" }}>
                     B2B
                   </div>
@@ -923,98 +910,61 @@ export default function GstReport() {
                   </div>
                 </div>
 
-                {/* Left Table: HSN 9032 (Controller) */}
-                <div>
+                {/* Single Clean B2B Table (All HSNs together) */}
+                <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
                     <thead>
-                      <tr style={{ color: "#ff0000", fontWeight: "bold", borderBottom: "1px solid #ccc" }}>
-                        <th style={{ textAlign: "left", padding: "6px 4px" }}>HSN</th>
-                        <th style={{ textAlign: "right", padding: "6px 4px", color: "#7030a0" }}>Qty</th>
-                        <th style={{ textAlign: "right", padding: "6px 4px" }}>Amount</th>
-                        <th style={{ textAlign: "right", padding: "6px 4px" }}>Amount</th>
-                        <th style={{ textAlign: "right", padding: "6px 4px" }}>SGST</th>
-                        <th style={{ textAlign: "right", padding: "6px 4px" }}>CGST</th>
+                      <tr style={{ color: "#ff0000", fontWeight: "bold", borderBottom: "2px solid #ccc" }}>
+                        <th style={{ textAlign: "left", padding: "8px 6px" }}>HSN</th>
+                        <th style={{ textAlign: "right", padding: "8px 6px", color: "#7030a0" }}>Qty</th>
+                        <th style={{ textAlign: "right", padding: "8px 6px" }}>Unit Rate</th>
+                        <th style={{ textAlign: "right", padding: "8px 6px" }}>Taxable Value</th>
+                        <th style={{ textAlign: "right", padding: "8px 6px" }}>SGST</th>
+                        <th style={{ textAlign: "right", padding: "8px 6px" }}>CGST</th>
+                        <th style={{ textAlign: "right", padding: "8px 6px" }}>Total Amount</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {b2bControllerGrouped.length > 0 ? (
-                        b2bControllerGrouped.map((it, idx) => (
-                          <tr key={idx} style={{ borderBottom: "1px solid #f0f0f0" }}>
-                            <td style={{ padding: "4px" }}>{it.hsn_code}</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>{it.quantity}</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>{formatINR(it.rate)}</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>{formatINR(it.taxableValue)}</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>{formatINR(it.sgstAmount)}</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>{formatINR(it.cgstAmount)}</td>
+                      {b2bItemsGrouped.length > 0 ? (
+                        <>
+                          {b2bItemsGrouped.map((it, idx) => (
+                            <tr key={idx} style={{ borderBottom: "1px solid #f0f0f0" }}>
+                              <td style={{ padding: "6px" }}>{it.hsn_code || "Misc"}</td>
+                              <td style={{ textAlign: "right", padding: "6px" }}>{it.quantity}</td>
+                              <td style={{ textAlign: "right", padding: "6px" }}>{formatINR(it.rate)}</td>
+                              <td style={{ textAlign: "right", padding: "6px" }}>{formatINR(it.taxableValue)}</td>
+                              <td style={{ textAlign: "right", padding: "6px" }}>{formatINR(it.sgstAmount)}</td>
+                              <td style={{ textAlign: "right", padding: "6px" }}>{formatINR(it.cgstAmount)}</td>
+                              <td style={{ textAlign: "right", padding: "6px", fontWeight: "500" }}>{formatINR(it.total)}</td>
+                            </tr>
+                          ))}
+                          {/* Subtotal Row (Red) */}
+                          <tr style={{ color: "#ff0000", fontWeight: "bold", borderTop: "2px solid #ccc", backgroundColor: "#fff5f5" }}>
+                            <td style={{ padding: "8px 6px" }}>B2B Subtotal</td>
+                            <td style={{ textAlign: "right", padding: "8px 6px", color: "#7030a0" }}>
+                              {b2bItemsGrouped.reduce((s, it) => s + it.quantity, 0)}
+                            </td>
+                            <td style={{ textAlign: "right", padding: "8px 6px" }}>-</td>
+                            <td style={{ textAlign: "right", padding: "8px 6px" }}>
+                              {formatINR(b2bItemsGrouped.reduce((s, it) => s + it.taxableValue, 0))}
+                            </td>
+                            <td style={{ textAlign: "right", padding: "8px 6px" }}>
+                              {formatINR(b2bItemsGrouped.reduce((s, it) => s + it.sgstAmount, 0))}
+                            </td>
+                            <td style={{ textAlign: "right", padding: "8px 6px" }}>
+                              {formatINR(b2bItemsGrouped.reduce((s, it) => s + it.cgstAmount, 0))}
+                            </td>
+                            <td style={{ textAlign: "right", padding: "8px 6px" }}>
+                              {formatINR(b2bItemsGrouped.reduce((s, it) => s + it.total, 0))}
+                            </td>
                           </tr>
-                        ))
+                        </>
                       ) : (
                         <tr>
-                          <td style={{ padding: "4px" }}>9032</td>
-                          <td style={{ textAlign: "right", padding: "4px" }}>0</td>
-                          <td style={{ textAlign: "right", padding: "4px" }}>₹ 0.00</td>
-                          <td style={{ textAlign: "right", padding: "4px" }}>₹ 0.00</td>
-                          <td style={{ textAlign: "right", padding: "4px" }}>₹ 0.00</td>
-                          <td style={{ textAlign: "right", padding: "4px" }}>₹ 0.00</td>
+                          <td colSpan="7" style={{ textAlign: "center", padding: "16px", color: "#94a3b8", fontStyle: "italic" }}>
+                            No B2B items in this period
+                          </td>
                         </tr>
-                      )}
-                      {/* Subtotal Row (Red) */}
-                      <tr style={{ color: "#ff0000", fontWeight: "bold", borderTop: "2px solid #ccc" }}>
-                        <td style={{ padding: "6px 4px" }}>Subtotal</td>
-                        <td style={{ textAlign: "right", padding: "6px 4px", color: "#7030a0" }}>
-                          {b2bControllerGrouped.reduce((s, it) => s + it.quantity, 0)}
-                        </td>
-                        <td style={{ textAlign: "right", padding: "6px 4px" }}>-</td>
-                        <td style={{ textAlign: "right", padding: "6px 4px" }}>
-                          {formatINR(b2bControllerGrouped.reduce((s, it) => s + it.taxableValue, 0))}
-                        </td>
-                        <td style={{ textAlign: "right", padding: "6px 4px" }}>
-                          {formatINR(b2bControllerGrouped.reduce((s, it) => s + it.sgstAmount, 0))}
-                        </td>
-                        <td style={{ textAlign: "right", padding: "6px 4px" }}>
-                          {formatINR(b2bControllerGrouped.reduce((s, it) => s + it.cgstAmount, 0))}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Right Table: Other HSNs (Cables, Pipes, Sensors, Fittings) */}
-                <div>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
-                    <thead>
-                      <tr style={{ color: "#ff0000", fontWeight: "bold", borderBottom: "1px solid #ccc" }}>
-                        <th style={{ textAlign: "left", padding: "6px 4px" }}>HSN</th>
-                        <th style={{ textAlign: "right", padding: "6px 4px", color: "#7030a0" }}>Qty</th>
-                        <th style={{ textAlign: "right", padding: "6px 4px" }}>Amount</th>
-                        <th style={{ textAlign: "right", padding: "6px 4px" }}>Amount</th>
-                        <th style={{ textAlign: "right", padding: "6px 4px" }}>SGST</th>
-                        <th style={{ textAlign: "right", padding: "6px 4px" }}>CGST</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {b2bOtherGrouped.length > 0 ? (
-                        b2bOtherGrouped.map((it, idx) => (
-                          <tr key={idx} style={{ borderBottom: "1px solid #f0f0f0" }}>
-                            <td style={{ padding: "4px" }}>{it.hsn_code || "Misc"}</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>{it.quantity}</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>{formatINR(it.rate)}</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>{formatINR(it.taxableValue)}</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>{formatINR(it.sgstAmount)}</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>{formatINR(it.cgstAmount)}</td>
-                          </tr>
-                        ))
-                      ) : (
-                        ["8544", "3917", "9026", "995461", "854790"].map((hsn, idx) => (
-                          <tr key={idx} style={{ borderBottom: "1px solid #f0f0f0" }}>
-                            <td style={{ padding: "4px" }}>{hsn}</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>0</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>₹ 0.00</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>₹ 0.00</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>₹ 0.00</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>₹ 0.00</td>
-                          </tr>
-                        ))
                       )}
                     </tbody>
                   </table>
@@ -1030,104 +980,67 @@ export default function GstReport() {
               }}></div>
 
               {/* Row 28: B2C Header */}
-              <div style={{ color: "#0070c0", fontWeight: "bold", fontSize: "16px", marginBottom: "12px", textAlign: "center" }}>
-                B2C
+              <div style={{ marginBottom: "12px" }}>
+                <span style={{ color: "#0070c0", fontWeight: "bold", fontSize: "16px" }}>
+                  B2C
+                </span>
               </div>
 
-              {/* B2C Tables */}
-              <div style={{ display: "grid", gridTemplateColumns: "180px 1fr 1fr", gap: "16px", marginBottom: "20px" }}>
+              {/* B2C Section: Left Combined Total Box + Single Unified B2C Table */}
+              <div style={{ display: "grid", gridTemplateColumns: "180px 1fr", gap: "20px", marginBottom: "20px", alignItems: "start" }}>
                 
-                {/* Column A: Summary Repeat */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "4px", justifyContent: "center" }}>
-                  <div style={{ color: "#7030a0", fontWeight: "bold", fontSize: "14px", marginBottom: "4px" }}>
-                    B2B Totals
+                {/* Column A: Total (B2B + B2C) Combined Summary Box */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <div style={{ color: "#7030a0", fontWeight: "bold", fontSize: "13px", marginBottom: "4px" }}>
+                    Total (B2B + B2C)
                   </div>
-                  <div style={{ padding: "4px 8px", fontWeight: "bold", color: "#ff0000", fontSize: "12px" }}>
-                    {formatINR(reportData.summary.b2b.taxable)}
+                  <div style={{ backgroundColor: "#ffff00", padding: "6px 10px", fontWeight: "bold", color: "#ff0000", fontSize: "13px" }}>
+                    {formatINR((reportData.summary.b2b.taxable || 0) + (reportData.summary.b2c.taxable || 0))}
                   </div>
-                  <div style={{ padding: "4px 8px", fontWeight: "bold", color: "#ff0000", fontSize: "12px" }}>
-                    {formatINR(reportData.summary.b2b.sgst)}
+                  <div style={{ backgroundColor: "#ffff00", padding: "6px 10px", fontWeight: "bold", color: "#ff0000", fontSize: "13px" }}>
+                    {formatINR((reportData.summary.b2b.sgst || 0) + (reportData.summary.b2c.sgst || 0))}
                   </div>
-                  <div style={{ padding: "4px 8px", fontWeight: "bold", color: "#ff0000", fontSize: "12px" }}>
-                    {formatINR(reportData.summary.b2b.cgst)}
+                  <div style={{ backgroundColor: "#ffff00", padding: "6px 10px", fontWeight: "bold", color: "#ff0000", fontSize: "13px" }}>
+                    {formatINR((reportData.summary.b2b.cgst || 0) + (reportData.summary.b2c.cgst || 0))}
+                  </div>
+                  <div style={{ backgroundColor: "#ffff00", padding: "6px 10px", fontWeight: "bold", color: "#ff0000", fontSize: "13px" }}>
+                    {formatINR((reportData.summary.b2b.total || 0) + (reportData.summary.b2c.total || 0))}
                   </div>
                 </div>
 
-                {/* Left Table: B2C Controller */}
-                <div>
+                {/* Single Clean B2C Table (All HSNs together) */}
+                <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
                     <thead>
-                      <tr style={{ color: "#0070c0", fontWeight: "bold", borderBottom: "1px solid #ccc" }}>
-                        <th style={{ textAlign: "left", padding: "6px 4px" }}>HSN</th>
-                        <th style={{ textAlign: "right", padding: "6px 4px", color: "#7030a0" }}>Qty</th>
-                        <th style={{ textAlign: "right", padding: "6px 4px" }}>Amount</th>
-                        <th style={{ textAlign: "right", padding: "6px 4px" }}>Amount</th>
-                        <th style={{ textAlign: "right", padding: "6px 4px" }}>SGST</th>
-                        <th style={{ textAlign: "right", padding: "6px 4px" }}>CGST</th>
+                      <tr style={{ color: "#0070c0", fontWeight: "bold", borderBottom: "2px solid #ccc" }}>
+                        <th style={{ textAlign: "left", padding: "8px 6px" }}>HSN</th>
+                        <th style={{ textAlign: "right", padding: "8px 6px", color: "#7030a0" }}>Qty</th>
+                        <th style={{ textAlign: "right", padding: "8px 6px" }}>Unit Rate</th>
+                        <th style={{ textAlign: "right", padding: "8px 6px" }}>Taxable Value</th>
+                        <th style={{ textAlign: "right", padding: "8px 6px" }}>SGST</th>
+                        <th style={{ textAlign: "right", padding: "8px 6px" }}>CGST</th>
+                        <th style={{ textAlign: "right", padding: "8px 6px" }}>Total Amount</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {b2cControllerGrouped.length > 0 ? (
-                        b2cControllerGrouped.map((it, idx) => (
+                      {b2cItemsGrouped.length > 0 ? (
+                        b2cItemsGrouped.map((it, idx) => (
                           <tr key={idx} style={{ borderBottom: "1px solid #f0f0f0" }}>
-                            <td style={{ padding: "4px" }}>{it.hsn_code}</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>{it.quantity}</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>{formatINR(it.rate)}</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>{formatINR(it.taxableValue)}</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>{formatINR(it.sgstAmount)}</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>{formatINR(it.cgstAmount)}</td>
+                            <td style={{ padding: "6px" }}>{it.hsn_code || "Misc"}</td>
+                            <td style={{ textAlign: "right", padding: "6px" }}>{it.quantity}</td>
+                            <td style={{ textAlign: "right", padding: "6px" }}>{formatINR(it.rate)}</td>
+                            <td style={{ textAlign: "right", padding: "6px" }}>{formatINR(it.taxableValue)}</td>
+                            <td style={{ textAlign: "right", padding: "6px" }}>{formatINR(it.sgstAmount)}</td>
+                            <td style={{ textAlign: "right", padding: "6px" }}>{formatINR(it.cgstAmount)}</td>
+                            <td style={{ textAlign: "right", padding: "6px", fontWeight: "500" }}>{formatINR(it.total)}</td>
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td style={{ padding: "4px" }}>9032</td>
-                          <td style={{ textAlign: "right", padding: "4px" }}>0</td>
-                          <td style={{ textAlign: "right", padding: "4px" }}>₹ 0.00</td>
-                          <td style={{ textAlign: "right", padding: "4px" }}>₹ 0.00</td>
-                          <td style={{ textAlign: "right", padding: "4px" }}>₹ 0.00</td>
-                          <td style={{ textAlign: "right", padding: "4px" }}>₹ 0.00</td>
+                          <td colSpan="7" style={{ textAlign: "center", padding: "16px", color: "#94a3b8", fontStyle: "italic" }}>
+                            No B2C items in this period
+                          </td>
                         </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Right Table: B2C Others */}
-                <div>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
-                    <thead>
-                      <tr style={{ color: "#0070c0", fontWeight: "bold", borderBottom: "1px solid #ccc" }}>
-                        <th style={{ textAlign: "left", padding: "6px 4px" }}>HSN</th>
-                        <th style={{ textAlign: "right", padding: "6px 4px", color: "#7030a0" }}>Qty</th>
-                        <th style={{ textAlign: "right", padding: "6px 4px" }}>Amount</th>
-                        <th style={{ textAlign: "right", padding: "6px 4px" }}>Amount</th>
-                        <th style={{ textAlign: "right", padding: "6px 4px" }}>SGST</th>
-                        <th style={{ textAlign: "right", padding: "6px 4px" }}>CGST</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {b2cOtherGrouped.length > 0 ? (
-                        b2cOtherGrouped.map((it, idx) => (
-                          <tr key={idx} style={{ borderBottom: "1px solid #f0f0f0" }}>
-                            <td style={{ padding: "4px" }}>{it.hsn_code}</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>{it.quantity}</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>{formatINR(it.rate)}</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>{formatINR(it.taxableValue)}</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>{formatINR(it.sgstAmount)}</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>{formatINR(it.cgstAmount)}</td>
-                          </tr>
-                        ))
-                      ) : (
-                        ["8544", "995461", "9026"].map((hsn, idx) => (
-                          <tr key={idx} style={{ borderBottom: "1px solid #f0f0f0" }}>
-                            <td style={{ padding: "4px" }}>{hsn}</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>0</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>₹ 0.00</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>₹ 0.00</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>₹ 0.00</td>
-                            <td style={{ textAlign: "right", padding: "4px" }}>₹ 0.00</td>
-                          </tr>
-                        ))
                       )}
                     </tbody>
                   </table>

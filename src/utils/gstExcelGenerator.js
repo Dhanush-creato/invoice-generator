@@ -106,26 +106,16 @@ export async function exportGstExcelReport(reportData, businessProfile) {
     views: [{ showGridLines: true }]
   });
 
-  // Set Column Widths to match client's template
+  // Set Column Widths for single clean table layout
   wsTemplate.columns = [
-    { key: "A", width: 18 },
-    { key: "B", width: 12 },
-    { key: "C", width: 10 },
-    { key: "D", width: 4 },
-    { key: "E", width: 4 },
-    { key: "F", width: 15 },
-    { key: "G", width: 16 },
-    { key: "H", width: 14 },
-    { key: "I", width: 14 },
-    { key: "J", width: 4 },
-    { key: "K", width: 12 },
-    { key: "L", width: 10 },
-    { key: "M", width: 4 },
-    { key: "N", width: 4 },
-    { key: "O", width: 14 },
-    { key: "P", width: 15 },
-    { key: "Q", width: 14 },
-    { key: "R", width: 14 },
+    { key: "A", width: 18 }, // Summary Box (Yellow B2B Box & Combined Total)
+    { key: "B", width: 14 }, // HSN
+    { key: "C", width: 10 }, // Qty
+    { key: "D", width: 14 }, // Unit Rate (₹)
+    { key: "E", width: 18 }, // Taxable Value (₹)
+    { key: "F", width: 14 }, // SGST (₹)
+    { key: "G", width: 14 }, // CGST (₹)
+    { key: "H", width: 18 }, // Total Amount (₹)
   ];
 
   // Helper for applying cell styling
@@ -137,9 +127,9 @@ export async function exportGstExcelReport(reportData, businessProfile) {
     if (options.border) cell.border = options.border;
   };
 
-  // Row 4: Solid RED Bar across columns A to R
+  // Row 4: Solid RED Bar across columns A to H
   const r4 = wsTemplate.getRow(4);
-  for (let c = 1; c <= 18; c++) {
+  for (let c = 1; c <= 8; c++) {
     const cell = r4.getCell(c);
     cell.fill = {
       type: "pattern",
@@ -153,16 +143,12 @@ export async function exportGstExcelReport(reportData, businessProfile) {
   cellB5.value = reportData.periodLabel || "10.10.2025";
   cellB5.font = { name: FONT_FAMILY, size: 11, bold: true };
 
-  // Row 6: B6 = "Controller", F6 = "B2B"
+  // Row 6: B6 = "B2B Sales"
   const cellB6 = wsTemplate.getCell("B6");
-  cellB6.value = "Controller";
+  cellB6.value = "B2B Sales";
   cellB6.font = { name: FONT_FAMILY, size: 12, bold: true, color: { argb: COLOR_RED } };
 
-  const cellF6 = wsTemplate.getCell("F6");
-  cellF6.value = "B2B";
-  cellF6.font = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: COLOR_RED } };
-
-  // Row 8: Table Header (Red bold text, Bookman Old Style 11pt)
+  // Row 8: Table Header (Red & Purple bold text, Bookman Old Style 11pt)
   const headerFontRed = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: COLOR_RED } };
   const headerFontPurple = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: COLOR_PURPLE } };
 
@@ -172,125 +158,98 @@ export async function exportGstExcelReport(reportData, businessProfile) {
   wsTemplate.getCell("C8").value = "Qty";
   wsTemplate.getCell("C8").font = headerFontPurple;
 
-  wsTemplate.getCell("F8").value = "Amount";
+  wsTemplate.getCell("D8").value = "Unit Rate";
+  wsTemplate.getCell("D8").font = headerFontRed;
+
+  wsTemplate.getCell("E8").value = "Taxable Value";
+  wsTemplate.getCell("E8").font = headerFontRed;
+
+  wsTemplate.getCell("F8").value = "SGST";
   wsTemplate.getCell("F8").font = headerFontRed;
 
-  wsTemplate.getCell("G8").value = "Amount";
+  wsTemplate.getCell("G8").value = "CGST";
   wsTemplate.getCell("G8").font = headerFontRed;
 
-  wsTemplate.getCell("H8").value = "SGST";
+  wsTemplate.getCell("H8").value = "Total Amount";
   wsTemplate.getCell("H8").font = headerFontRed;
 
-  wsTemplate.getCell("I8").value = "CGST";
-  wsTemplate.getCell("I8").font = headerFontRed;
-
-  // Right Table Headers (Col K, L, O, P, Q, R)
-  wsTemplate.getCell("K8").value = "HSN";
-  wsTemplate.getCell("K8").font = headerFontRed;
-
-  wsTemplate.getCell("L8").value = "Qty";
-  wsTemplate.getCell("L8").font = headerFontPurple;
-
-  wsTemplate.getCell("O8").value = "Amount";
-  wsTemplate.getCell("O8").font = headerFontRed;
-
-  wsTemplate.getCell("P8").value = "Amount";
-  wsTemplate.getCell("P8").font = headerFontRed;
-
-  wsTemplate.getCell("Q8").value = "SGST";
-  wsTemplate.getCell("Q8").font = headerFontRed;
-
-  wsTemplate.getCell("R8").value = "CGST";
-  wsTemplate.getCell("R8").font = headerFontRed;
-
-  // Separate B2B items into Controller (HSN 9032) and Other HSNs,
-  // then group each bucket by (HSN + Rate) so identical price rows are merged.
-  const b2bControllerRaw = [];
-  const b2bOtherRaw = [];
-
+  // Group ALL B2B items by (HSN + Rate) - NO artificial 9032 separation
+  const b2bRaw = [];
   b2bInvoices.forEach((inv) => {
     (inv.calculatedItems || []).forEach((it) => {
-      if (String(it.hsn_code).trim() === "9032") {
-        b2bControllerRaw.push(it);
-      } else {
-        b2bOtherRaw.push(it);
-      }
+      b2bRaw.push(it);
     });
   });
+  const b2bItems = groupByHsnAndRate(b2bRaw);
 
-  const b2bControllerItems = groupByHsnAndRate(b2bControllerRaw);
-  const b2bOtherItems      = groupByHsnAndRate(b2bOtherRaw);
+  // Group ALL B2C items by (HSN + Rate) - NO artificial 9032 separation
+  const b2cRaw = [];
+  b2cInvoices.forEach((inv) => {
+    (inv.calculatedItems || []).forEach((it) => {
+      b2cRaw.push(it);
+    });
+  });
+  const b2cItems = groupByHsnAndRate(b2cRaw);
 
-  // Populate B2B Rows (Row 9 through 16)
+  // Populate B2B Rows sequentially
+  let currentRow = 9;
   let subtotalB2BQty = 0;
-  let subtotalB2BRate = 0;
   let subtotalB2BTaxable = 0;
   let subtotalB2BSgst = 0;
   let subtotalB2BCgst = 0;
+  let subtotalB2BTotal = 0;
 
-  for (let i = 0; i < 8; i++) {
-    const rowNum = 9 + i;
-    const itLeft = b2bControllerItems[i];
+  b2bItems.forEach((it) => {
+    wsTemplate.getCell(`B${currentRow}`).value = it.hsn_code;
+    wsTemplate.getCell(`C${currentRow}`).value = it.quantity;
+    wsTemplate.getCell(`D${currentRow}`).value = it.rate;
+    wsTemplate.getCell(`E${currentRow}`).value = it.taxableValue;
+    wsTemplate.getCell(`F${currentRow}`).value = it.sgstAmount;
+    wsTemplate.getCell(`G${currentRow}`).value = it.cgstAmount;
+    wsTemplate.getCell(`H${currentRow}`).value = it.totalAmount;
 
-    if (itLeft) {
-      wsTemplate.getCell(`B${rowNum}`).value = itLeft.hsn_code || "9032";
-      wsTemplate.getCell(`C${rowNum}`).value = itLeft.quantity;
-      wsTemplate.getCell(`F${rowNum}`).value = itLeft.rate;
-      wsTemplate.getCell(`G${rowNum}`).value = itLeft.taxableValue;
-      wsTemplate.getCell(`H${rowNum}`).value = itLeft.sgstAmount;
-      wsTemplate.getCell(`I${rowNum}`).value = itLeft.cgstAmount;
-
-      subtotalB2BQty += itLeft.quantity;
-      subtotalB2BRate += itLeft.rate;
-      subtotalB2BTaxable += itLeft.taxableValue;
-      subtotalB2BSgst += itLeft.sgstAmount;
-      subtotalB2BCgst += itLeft.cgstAmount;
-    } else {
-      wsTemplate.getCell(`B${rowNum}`).value = "9032";
-      wsTemplate.getCell(`C${rowNum}`).value = 0;
-      wsTemplate.getCell(`F${rowNum}`).value = 0;
-      wsTemplate.getCell(`G${rowNum}`).value = 0;
-      wsTemplate.getCell(`H${rowNum}`).value = 0;
-      wsTemplate.getCell(`I${rowNum}`).value = 0;
-    }
-
-    [wsTemplate.getCell(`B${rowNum}`), wsTemplate.getCell(`C${rowNum}`)].forEach((c) => {
+    [wsTemplate.getCell(`B${currentRow}`), wsTemplate.getCell(`C${currentRow}`)].forEach((c) => {
       c.font = { name: FONT_FAMILY, size: 11 };
     });
-    [`F${rowNum}`, `G${rowNum}`, `H${rowNum}`, `I${rowNum}`].forEach((coord) => {
+    [`D${currentRow}`, `E${currentRow}`, `F${currentRow}`, `G${currentRow}`, `H${currentRow}`].forEach((coord) => {
       const c = wsTemplate.getCell(coord);
       c.font = { name: FONT_FAMILY, size: 11 };
       c.numFmt = NUM_FMT_INR;
     });
 
-    // Populate Right table row
-    const itRight = b2bOtherItems[i];
-    if (itRight) {
-      wsTemplate.getCell(`K${rowNum}`).value = itRight.hsn_code;
-      wsTemplate.getCell(`L${rowNum}`).value = itRight.quantity;
-      wsTemplate.getCell(`O${rowNum}`).value = itRight.rate;
-      wsTemplate.getCell(`P${rowNum}`).value = itRight.taxableValue;
-      wsTemplate.getCell(`Q${rowNum}`).value = itRight.sgstAmount;
-      wsTemplate.getCell(`R${rowNum}`).value = itRight.cgstAmount;
-    } else {
-      const defaultHsns = ["8544", "8544", "3917", "3917", "9026", "9026", "995461", "9107"];
-      wsTemplate.getCell(`K${rowNum}`).value = defaultHsns[i] || "";
-      wsTemplate.getCell(`L${rowNum}`).value = 0;
-      wsTemplate.getCell(`O${rowNum}`).value = 0;
-      wsTemplate.getCell(`P${rowNum}`).value = 0;
-      wsTemplate.getCell(`Q${rowNum}`).value = 0;
-      wsTemplate.getCell(`R${rowNum}`).value = 0;
-    }
+    subtotalB2BQty += it.quantity;
+    subtotalB2BTaxable += it.taxableValue;
+    subtotalB2BSgst += it.sgstAmount;
+    subtotalB2BCgst += it.cgstAmount;
+    subtotalB2BTotal += it.totalAmount;
+    currentRow++;
+  });
 
-    [wsTemplate.getCell(`K${rowNum}`), wsTemplate.getCell(`L${rowNum}`)].forEach((c) => {
-      c.font = { name: FONT_FAMILY, size: 11 };
-    });
-    [`O${rowNum}`, `P${rowNum}`, `Q${rowNum}`, `R${rowNum}`].forEach((coord) => {
-      const c = wsTemplate.getCell(coord);
-      c.font = { name: FONT_FAMILY, size: 11 };
-      c.numFmt = NUM_FMT_INR;
-    });
-  }
+  // Subtotal for B2B
+  const b2bSubtotalRow = Math.max(currentRow, 10);
+  const redSubtotalFont = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: COLOR_RED } };
+
+  wsTemplate.getCell(`B${b2bSubtotalRow}`).value = "Total B2B";
+  wsTemplate.getCell(`B${b2bSubtotalRow}`).font = redSubtotalFont;
+
+  wsTemplate.getCell(`C${b2bSubtotalRow}`).value = subtotalB2BQty;
+  wsTemplate.getCell(`C${b2bSubtotalRow}`).font = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: COLOR_PURPLE } };
+
+  wsTemplate.getCell(`E${b2bSubtotalRow}`).value = subtotalB2BTaxable;
+  wsTemplate.getCell(`E${b2bSubtotalRow}`).font = redSubtotalFont;
+  wsTemplate.getCell(`E${b2bSubtotalRow}`).numFmt = NUM_FMT_INR;
+
+  wsTemplate.getCell(`F${b2bSubtotalRow}`).value = subtotalB2BSgst;
+  wsTemplate.getCell(`F${b2bSubtotalRow}`).font = redSubtotalFont;
+  wsTemplate.getCell(`F${b2bSubtotalRow}`).numFmt = NUM_FMT_INR;
+
+  wsTemplate.getCell(`G${b2bSubtotalRow}`).value = subtotalB2BCgst;
+  wsTemplate.getCell(`G${b2bSubtotalRow}`).font = redSubtotalFont;
+  wsTemplate.getCell(`G${b2bSubtotalRow}`).numFmt = NUM_FMT_INR;
+
+  wsTemplate.getCell(`H${b2bSubtotalRow}`).value = subtotalB2BTotal;
+  wsTemplate.getCell(`H${b2bSubtotalRow}`).font = redSubtotalFont;
+  wsTemplate.getCell(`H${b2bSubtotalRow}`).numFmt = NUM_FMT_INR;
 
   // Row 15: Column A has "B2B" (bold purple)
   const cellA15 = wsTemplate.getCell("A15");
@@ -324,203 +283,136 @@ export async function exportGstExcelReport(reportData, businessProfile) {
   cellA19.fill = yellowFill;
   cellA19.numFmt = NUM_FMT_INR;
 
-  // Subtotal for Controller (Row 17)
-  const redSubtotalFont = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: COLOR_RED } };
-  wsTemplate.getCell("C17").value = subtotalB2BQty;
-  wsTemplate.getCell("C17").font = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: COLOR_PURPLE } };
-
-  wsTemplate.getCell("F17").value = subtotalB2BRate;
-  wsTemplate.getCell("F17").font = redSubtotalFont;
-  wsTemplate.getCell("F17").numFmt = NUM_FMT_INR;
-
-  wsTemplate.getCell("G17").value = subtotalB2BTaxable;
-  wsTemplate.getCell("G17").font = redSubtotalFont;
-  wsTemplate.getCell("G17").numFmt = NUM_FMT_INR;
-
-  wsTemplate.getCell("H17").value = subtotalB2BSgst;
-  wsTemplate.getCell("H17").font = redSubtotalFont;
-  wsTemplate.getCell("H17").numFmt = NUM_FMT_INR;
-
-  wsTemplate.getCell("I17").value = subtotalB2BCgst;
-  wsTemplate.getCell("I17").font = redSubtotalFont;
-  wsTemplate.getCell("I17").numFmt = NUM_FMT_INR;
-
-  // Additional HSN blocks (Row 20 to 24)
-  for (let r = 20; r <= 24; r++) {
-    if (r === 24) {
-      const extraItem = b2bOtherItems[8];
-      wsTemplate.getCell("K24").value = extraItem ? extraItem.hsn_code : "";
-      wsTemplate.getCell("L24").value = extraItem ? extraItem.quantity : 0;
-      wsTemplate.getCell("O24").value = extraItem ? extraItem.rate : 0;
-      wsTemplate.getCell("P24").value = extraItem ? extraItem.taxableValue : 0;
-      wsTemplate.getCell("Q24").value = extraItem ? extraItem.sgstAmount : 0;
-      wsTemplate.getCell("R24").value = extraItem ? extraItem.cgstAmount : 0;
-
-      [wsTemplate.getCell("K24"), wsTemplate.getCell("L24")].forEach((c) => {
-        c.font = { name: FONT_FAMILY, size: 11 };
-      });
-      ["O24", "P24", "Q24", "R24"].forEach((coord) => {
-        const c = wsTemplate.getCell(coord);
-        c.font = { name: FONT_FAMILY, size: 11 };
-        c.numFmt = NUM_FMT_INR;
-      });
-    }
-  }
-
-  // Row 27: Solid CYAN Bar across columns A to R
-  const r27 = wsTemplate.getRow(27);
-  for (let c = 1; c <= 18; c++) {
-    const cell = r27.getCell(c);
-    cell.fill = {
+  // Solid CYAN Bar across columns A to H for B2C section
+  const cyanBarRow = Math.max(b2bSubtotalRow + 2, 21);
+  const rCyan = wsTemplate.getRow(cyanBarRow);
+  for (let c = 1; c <= 8; c++) {
+    rCyan.getCell(c).fill = {
       type: "pattern",
       pattern: "solid",
       fgColor: { argb: COLOR_CYAN }
     };
   }
 
-  // Row 28: F28 = "B2C" (bold blue)
-  const cellF28 = wsTemplate.getCell("F28");
-  cellF28.value = "B2C";
-  cellF28.font = { name: FONT_FAMILY, size: 12, bold: true, color: { argb: COLOR_BLUE } };
+  // B2C Header row
+  const b2cTitleRow = cyanBarRow + 1;
+  const cellB2cTitle = wsTemplate.getCell(`B${b2cTitleRow}`);
+  cellB2cTitle.value = "B2C Sales";
+  cellB2cTitle.font = { name: FONT_FAMILY, size: 12, bold: true, color: { argb: COLOR_BLUE } };
 
-  // Row 29: Header row for B2C (bold blue)
+  const b2cHeaderRow = b2cTitleRow + 1;
   const headerFontBlue = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: COLOR_BLUE } };
-  ["B29", "F29", "G29", "H29", "I29", "K29", "M29", "N29", "O29", "P29"].forEach((coord) => {
-    const c = wsTemplate.getCell(coord);
-    c.font = headerFontBlue;
-  });
-  wsTemplate.getCell("B29").value = "HSN";
-  wsTemplate.getCell("C29").value = "Qty";
-  wsTemplate.getCell("C29").font = headerFontPurple;
-  wsTemplate.getCell("F29").value = "Amount";
-  wsTemplate.getCell("G29").value = "Amount";
-  wsTemplate.getCell("H29").value = "SGST";
-  wsTemplate.getCell("I29").value = "CGST";
 
-  wsTemplate.getCell("K29").value = "HSN";
-  wsTemplate.getCell("L29").value = "Qty";
-  wsTemplate.getCell("L29").font = headerFontPurple;
-  wsTemplate.getCell("M29").value = "Amount";
-  wsTemplate.getCell("N29").value = "Amount";
-  wsTemplate.getCell("O29").value = "SGST";
-  wsTemplate.getCell("P29").value = "CGST";
+  wsTemplate.getCell(`B${b2cHeaderRow}`).value = "HSN";
+  wsTemplate.getCell(`B${b2cHeaderRow}`).font = headerFontBlue;
 
-  // Separate B2C items into Controller (9032) and others,
-  // then group each bucket by (HSN + Rate) so identical price rows are merged.
-  const b2cControllerRaw = [];
-  const b2cOtherRaw = [];
+  wsTemplate.getCell(`C${b2cHeaderRow}`).value = "Qty";
+  wsTemplate.getCell(`C${b2cHeaderRow}`).font = headerFontPurple;
 
-  b2cInvoices.forEach((inv) => {
-    (inv.calculatedItems || []).forEach((it) => {
-      if (String(it.hsn_code).trim() === "9032") {
-        b2cControllerRaw.push(it);
-      } else {
-        b2cOtherRaw.push(it);
-      }
-    });
-  });
+  wsTemplate.getCell(`D${b2cHeaderRow}`).value = "Unit Rate";
+  wsTemplate.getCell(`D${b2cHeaderRow}`).font = headerFontBlue;
 
-  const b2cControllerItems = groupByHsnAndRate(b2cControllerRaw);
-  const b2cOtherItems      = groupByHsnAndRate(b2cOtherRaw);
+  wsTemplate.getCell(`E${b2cHeaderRow}`).value = "Taxable Value";
+  wsTemplate.getCell(`E${b2cHeaderRow}`).font = headerFontBlue;
 
-  // Populate B2C rows (Rows 30 to 38)
-  for (let i = 0; i < 8; i++) {
-    const rowNum = 30 + i;
-    const itLeft = b2cControllerItems[i];
+  wsTemplate.getCell(`F${b2cHeaderRow}`).value = "SGST";
+  wsTemplate.getCell(`F${b2cHeaderRow}`).font = headerFontBlue;
 
-    if (itLeft) {
-      wsTemplate.getCell(`B${rowNum}`).value = itLeft.hsn_code || "9032";
-      wsTemplate.getCell(`C${rowNum}`).value = itLeft.quantity;
-      wsTemplate.getCell(`F${rowNum}`).value = itLeft.rate;
-      wsTemplate.getCell(`G${rowNum}`).value = itLeft.taxableValue;
-      wsTemplate.getCell(`H${rowNum}`).value = itLeft.sgstAmount;
-      wsTemplate.getCell(`I${rowNum}`).value = itLeft.cgstAmount;
-    } else {
-      wsTemplate.getCell(`B${rowNum}`).value = "9032";
-      wsTemplate.getCell(`C${rowNum}`).value = 0;
-      wsTemplate.getCell(`F${rowNum}`).value = 0;
-      wsTemplate.getCell(`G${rowNum}`).value = 0;
-      wsTemplate.getCell(`H${rowNum}`).value = 0;
-      wsTemplate.getCell(`I${rowNum}`).value = 0;
-    }
+  wsTemplate.getCell(`G${b2cHeaderRow}`).value = "CGST";
+  wsTemplate.getCell(`G${b2cHeaderRow}`).font = headerFontBlue;
 
-    [wsTemplate.getCell(`B${rowNum}`), wsTemplate.getCell(`C${rowNum}`)].forEach((c) => {
+  wsTemplate.getCell(`H${b2cHeaderRow}`).value = "Total Amount";
+  wsTemplate.getCell(`H${b2cHeaderRow}`).font = headerFontBlue;
+
+  // Populate B2C rows sequentially
+  let currentB2cRow = b2cHeaderRow + 1;
+  let subtotalB2CQty = 0;
+  let subtotalB2CTaxable = 0;
+  let subtotalB2CSgst = 0;
+  let subtotalB2CCgst = 0;
+  let subtotalB2CTotal = 0;
+
+  b2cItems.forEach((it) => {
+    wsTemplate.getCell(`B${currentB2cRow}`).value = it.hsn_code;
+    wsTemplate.getCell(`C${currentB2cRow}`).value = it.quantity;
+    wsTemplate.getCell(`D${currentB2cRow}`).value = it.rate;
+    wsTemplate.getCell(`E${currentB2cRow}`).value = it.taxableValue;
+    wsTemplate.getCell(`F${currentB2cRow}`).value = it.sgstAmount;
+    wsTemplate.getCell(`G${currentB2cRow}`).value = it.cgstAmount;
+    wsTemplate.getCell(`H${currentB2cRow}`).value = it.totalAmount;
+
+    [wsTemplate.getCell(`B${currentB2cRow}`), wsTemplate.getCell(`C${currentB2cRow}`)].forEach((c) => {
       c.font = { name: FONT_FAMILY, size: 11 };
     });
-    [`F${rowNum}`, `G${rowNum}`, `H${rowNum}`, `I${rowNum}`].forEach((coord) => {
+    [`D${currentB2cRow}`, `E${currentB2cRow}`, `F${currentB2cRow}`, `G${currentB2cRow}`, `H${currentB2cRow}`].forEach((coord) => {
       const c = wsTemplate.getCell(coord);
       c.font = { name: FONT_FAMILY, size: 11 };
       c.numFmt = NUM_FMT_INR;
     });
 
-    const itRight = b2cOtherItems[i];
-    if (itRight) {
-      wsTemplate.getCell(`K${rowNum}`).value = itRight.hsn_code;
-      wsTemplate.getCell(`L${rowNum}`).value = itRight.quantity;
-      wsTemplate.getCell(`M${rowNum}`).value = itRight.rate;
-      wsTemplate.getCell(`N${rowNum}`).value = itRight.taxableValue;
-      wsTemplate.getCell(`O${rowNum}`).value = itRight.sgstAmount;
-      wsTemplate.getCell(`P${rowNum}`).value = itRight.cgstAmount;
-    } else {
-      const defaultB2cHsns = ["8544", "3917", "995461", "9026", "9026"];
-      wsTemplate.getCell(`K${rowNum}`).value = defaultB2cHsns[i] || "";
-      wsTemplate.getCell(`L${rowNum}`).value = 0;
-      wsTemplate.getCell(`M${rowNum}`).value = 0;
-      wsTemplate.getCell(`N${rowNum}`).value = 0;
-      wsTemplate.getCell(`O${rowNum}`).value = 0;
-      wsTemplate.getCell(`P${rowNum}`).value = 0;
-    }
+    subtotalB2CQty += it.quantity;
+    subtotalB2CTaxable += it.taxableValue;
+    subtotalB2CSgst += it.sgstAmount;
+    subtotalB2CCgst += it.cgstAmount;
+    subtotalB2CTotal += it.totalAmount;
+    currentB2cRow++;
+  });
 
-    [wsTemplate.getCell(`K${rowNum}`), wsTemplate.getCell(`L${rowNum}`)].forEach((c) => {
-      c.font = { name: FONT_FAMILY, size: 11 };
-    });
-    [`M${rowNum}`, `N${rowNum}`, `O${rowNum}`, `P${rowNum}`].forEach((coord) => {
-      const c = wsTemplate.getCell(coord);
-      c.font = { name: FONT_FAMILY, size: 11 };
-      c.numFmt = NUM_FMT_INR;
-    });
-  }
-
-  // Row 41: "Total B2C" (green highlight)
+  // Total B2C Highlight Bar (Green)
+  const b2cSubtotalRow = Math.max(currentB2cRow, b2cHeaderRow + 2);
   const greenFill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR_LIGHT_GREEN } };
-  const cellF41 = wsTemplate.getCell("F41");
-  cellF41.value = "Total B2C";
-  cellF41.font = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: "FF385723" } };
-  cellF41.fill = greenFill;
+  const greenFont = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: "FF385723" } };
 
-  const cellG41 = wsTemplate.getCell("G41");
-  cellG41.value = summary.b2c.taxable;
-  cellG41.font = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: "FF385723" } };
-  cellG41.fill = greenFill;
-  cellG41.numFmt = NUM_FMT_INR;
+  wsTemplate.getCell(`B${b2cSubtotalRow}`).value = "Total B2C";
+  wsTemplate.getCell(`B${b2cSubtotalRow}`).font = greenFont;
+  wsTemplate.getCell(`B${b2cSubtotalRow}`).fill = greenFill;
 
-  const cellH41 = wsTemplate.getCell("H41");
-  cellH41.value = summary.b2c.sgst;
-  cellH41.font = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: "FF385723" } };
-  cellH41.fill = greenFill;
-  cellH41.numFmt = NUM_FMT_INR;
+  wsTemplate.getCell(`C${b2cSubtotalRow}`).value = subtotalB2CQty;
+  wsTemplate.getCell(`C${b2cSubtotalRow}`).font = greenFont;
+  wsTemplate.getCell(`C${b2cSubtotalRow}`).fill = greenFill;
 
-  const cellI41 = wsTemplate.getCell("I41");
-  cellI41.value = summary.b2c.cgst;
-  cellI41.font = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: "FF385723" } };
-  cellI41.fill = greenFill;
-  cellI41.numFmt = NUM_FMT_INR;
+  wsTemplate.getCell(`D${b2cSubtotalRow}`).fill = greenFill;
 
-  // Row 39-42: Left Side Summary repeat
-  wsTemplate.getCell("A39").value = "B2B";
-  wsTemplate.getCell("A39").font = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: COLOR_PURPLE } };
+  wsTemplate.getCell(`E${b2cSubtotalRow}`).value = subtotalB2CTaxable;
+  wsTemplate.getCell(`E${b2cSubtotalRow}`).font = greenFont;
+  wsTemplate.getCell(`E${b2cSubtotalRow}`).fill = greenFill;
+  wsTemplate.getCell(`E${b2cSubtotalRow}`).numFmt = NUM_FMT_INR;
 
-  wsTemplate.getCell("A40").value = summary.b2b.taxable;
-  wsTemplate.getCell("A40").font = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: COLOR_RED } };
-  wsTemplate.getCell("A40").numFmt = NUM_FMT_INR;
+  wsTemplate.getCell(`F${b2cSubtotalRow}`).value = subtotalB2CSgst;
+  wsTemplate.getCell(`F${b2cSubtotalRow}`).font = greenFont;
+  wsTemplate.getCell(`F${b2cSubtotalRow}`).fill = greenFill;
+  wsTemplate.getCell(`F${b2cSubtotalRow}`).numFmt = NUM_FMT_INR;
 
-  wsTemplate.getCell("A41").value = summary.b2b.sgst;
-  wsTemplate.getCell("A41").font = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: COLOR_RED } };
-  wsTemplate.getCell("A41").numFmt = NUM_FMT_INR;
+  wsTemplate.getCell(`G${b2cSubtotalRow}`).value = subtotalB2CCgst;
+  wsTemplate.getCell(`G${b2cSubtotalRow}`).font = greenFont;
+  wsTemplate.getCell(`G${b2cSubtotalRow}`).fill = greenFill;
+  wsTemplate.getCell(`G${b2cSubtotalRow}`).numFmt = NUM_FMT_INR;
 
-  wsTemplate.getCell("A42").value = summary.b2b.cgst;
-  wsTemplate.getCell("A42").font = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: COLOR_RED } };
-  wsTemplate.getCell("A42").numFmt = NUM_FMT_INR;
+  wsTemplate.getCell(`H${b2cSubtotalRow}`).value = subtotalB2CTotal;
+  wsTemplate.getCell(`H${b2cSubtotalRow}`).font = greenFont;
+  wsTemplate.getCell(`H${b2cSubtotalRow}`).fill = greenFill;
+  wsTemplate.getCell(`H${b2cSubtotalRow}`).numFmt = NUM_FMT_INR;
+
+  // Bottom-Left Combined Total (B2B + B2C)
+  const totalTaxableCombined = (summary.b2b?.taxable || 0) + (summary.b2c?.taxable || 0);
+  const totalSgstCombined = (summary.b2b?.sgst || 0) + (summary.b2c?.sgst || 0);
+  const totalCgstCombined = (summary.b2b?.cgst || 0) + (summary.b2c?.cgst || 0);
+
+  const bottomBoxRow = Math.max(b2cSubtotalRow, 30);
+  wsTemplate.getCell(`A${bottomBoxRow - 3}`).value = "Total (B2B + B2C)";
+  wsTemplate.getCell(`A${bottomBoxRow - 3}`).font = { name: FONT_FAMILY, size: 9.5, bold: true, color: { argb: COLOR_PURPLE } };
+
+  wsTemplate.getCell(`A${bottomBoxRow - 2}`).value = totalTaxableCombined;
+  wsTemplate.getCell(`A${bottomBoxRow - 2}`).font = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: COLOR_RED } };
+  wsTemplate.getCell(`A${bottomBoxRow - 2}`).numFmt = NUM_FMT_INR;
+
+  wsTemplate.getCell(`A${bottomBoxRow - 1}`).value = totalSgstCombined;
+  wsTemplate.getCell(`A${bottomBoxRow - 1}`).font = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: COLOR_RED } };
+  wsTemplate.getCell(`A${bottomBoxRow - 1}`).numFmt = NUM_FMT_INR;
+
+  wsTemplate.getCell(`A${bottomBoxRow}`).value = totalCgstCombined;
+  wsTemplate.getCell(`A${bottomBoxRow}`).font = { name: FONT_FAMILY, size: 11, bold: true, color: { argb: COLOR_RED } };
+  wsTemplate.getCell(`A${bottomBoxRow}`).numFmt = NUM_FMT_INR;
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // SHEET 2: B2B Invoices Detailed Drill-Down (Grouped by HSN & Rate)
