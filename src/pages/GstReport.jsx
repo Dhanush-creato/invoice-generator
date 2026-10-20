@@ -204,9 +204,10 @@ export default function GstReport() {
 
       <main className="main-content">
         <style>{`
-          /* Pure Crisp White Calendar Picker Indicator for Date Inputs */
+          /* Date Inputs - Dark Theme */
           .gst-date-input {
             color-scheme: dark !important;
+            color: var(--text-primary) !important;
           }
           .gst-date-input::-webkit-calendar-picker-indicator {
             cursor: pointer !important;
@@ -222,6 +223,68 @@ export default function GstReport() {
           .gst-date-input::-webkit-calendar-picker-indicator:hover {
             background-color: rgba(255, 255, 255, 0.25) !important;
             transform: scale(1.1) !important;
+          }
+
+          /* Date Inputs - Light Theme Overrides */
+          .light-theme .gst-date-input {
+            color-scheme: light !important;
+            color: var(--text-primary) !important;
+          }
+          .light-theme .gst-date-input::-webkit-calendar-picker-indicator {
+            filter: none !important;
+            -webkit-filter: none !important;
+            opacity: 0.75 !important;
+          }
+          .light-theme .gst-date-input::-webkit-calendar-picker-indicator:hover {
+            background-color: rgba(0, 0, 0, 0.08) !important;
+            transform: scale(1.1) !important;
+          }
+
+          /* Financial Year Dropdown & Options */
+          .gst-fy-select {
+            color-scheme: dark;
+          }
+          .gst-fy-select option {
+            background-color: #0d1527;
+            color: #f3f4f6;
+          }
+          .light-theme .gst-fy-select {
+            color-scheme: light;
+          }
+          .light-theme .gst-fy-select option {
+            background-color: #ffffff;
+            color: #1e293b;
+          }
+
+          /* Quick Presets Buttons */
+          .gst-preset-btn {
+            background-color: var(--input-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            transition: all 0.15s ease;
+          }
+          .gst-preset-btn:hover {
+            background-color: var(--accent-glow) !important;
+            border-color: var(--accent-color) !important;
+            color: var(--accent-color) !important;
+          }
+          .light-theme .gst-preset-btn:hover {
+            background-color: rgba(37, 99, 235, 0.1) !important;
+            border-color: var(--accent-color) !important;
+            color: var(--accent-color) !important;
+          }
+
+          /* Month Tabs Hover */
+          .gst-month-btn {
+            transition: all 0.15s ease;
+          }
+          .gst-month-btn:hover {
+            background-color: var(--accent-glow) !important;
+            color: var(--accent-color) !important;
+          }
+          .light-theme .gst-month-btn:hover {
+            background-color: rgba(37, 99, 235, 0.1) !important;
+            color: var(--accent-color) !important;
           }
         `}</style>
         <Header title="Monthly GST Report" />
@@ -321,6 +384,7 @@ export default function GstReport() {
                     <select
                       value={selectedFY}
                       onChange={(e) => handleSelectFY(e.target.value)}
+                      className="gst-fy-select"
                       style={{
                         padding: "8px 0",
                         fontSize: "13px",
@@ -332,7 +396,7 @@ export default function GstReport() {
                       }}
                     >
                       {availableFYs.map((fy) => (
-                        <option key={fy} value={fy} style={{ backgroundColor: "var(--bg-secondary)", color: "var(--text-primary)" }}>FY {fy}</option>
+                        <option key={fy} value={fy}>FY {fy}</option>
                       ))}
                     </select>
                   </div>
@@ -468,15 +532,13 @@ export default function GstReport() {
               </span>
               <button
                 type="button"
+                className="gst-preset-btn"
                 onClick={() => handlePreset("full_fy")}
                 style={{
                   padding: "6px 12px",
                   borderRadius: "6px",
                   fontSize: "12px",
                   fontWeight: "600",
-                  backgroundColor: "var(--input-bg)",
-                  color: "var(--text-primary)",
-                  border: "1px solid var(--border-color)",
                   cursor: "pointer"
                 }}
               >
@@ -484,15 +546,13 @@ export default function GstReport() {
               </button>
               <button
                 type="button"
+                className="gst-preset-btn"
                 onClick={() => handlePreset("q1")}
                 style={{
                   padding: "6px 12px",
                   borderRadius: "6px",
                   fontSize: "12px",
                   fontWeight: "600",
-                  backgroundColor: "var(--input-bg)",
-                  color: "var(--text-primary)",
-                  border: "1px solid var(--border-color)",
                   cursor: "pointer"
                 }}
               >
@@ -500,15 +560,13 @@ export default function GstReport() {
               </button>
               <button
                 type="button"
+                className="gst-preset-btn"
                 onClick={() => handlePreset("q2")}
                 style={{
                   padding: "6px 12px",
                   borderRadius: "6px",
                   fontSize: "12px",
                   fontWeight: "600",
-                  backgroundColor: "var(--input-bg)",
-                  color: "var(--text-primary)",
-                  border: "1px solid var(--border-color)",
                   cursor: "pointer"
                 }}
               >
@@ -516,15 +574,13 @@ export default function GstReport() {
               </button>
               <button
                 type="button"
+                className="gst-preset-btn"
                 onClick={() => handlePreset("q3")}
                 style={{
                   padding: "6px 12px",
                   borderRadius: "6px",
                   fontSize: "12px",
                   fontWeight: "600",
-                  backgroundColor: "var(--input-bg)",
-                  color: "var(--text-primary)",
-                  border: "1px solid var(--border-color)",
                   cursor: "pointer"
                 }}
               >
@@ -532,15 +588,13 @@ export default function GstReport() {
               </button>
               <button
                 type="button"
+                className="gst-preset-btn"
                 onClick={() => handlePreset("q4")}
                 style={{
                   padding: "6px 12px",
                   borderRadius: "6px",
                   fontSize: "12px",
                   fontWeight: "600",
-                  backgroundColor: "var(--input-bg)",
-                  color: "var(--text-primary)",
-                  border: "1px solid var(--border-color)",
                   cursor: "pointer"
                 }}
               >
@@ -548,15 +602,13 @@ export default function GstReport() {
               </button>
               <button
                 type="button"
+                className="gst-preset-btn"
                 onClick={() => handlePreset("last_30")}
                 style={{
                   padding: "6px 12px",
                   borderRadius: "6px",
                   fontSize: "12px",
                   fontWeight: "600",
-                  backgroundColor: "var(--input-bg)",
-                  color: "var(--text-primary)",
-                  border: "1px solid var(--border-color)",
                   cursor: "pointer"
                 }}
               >
@@ -592,6 +644,7 @@ export default function GstReport() {
                     <button
                       key={m.index}
                       type="button"
+                      className="gst-month-btn"
                       onClick={() => handleSelectMonth(m.index)}
                       style={{
                         flex: "1 0 64px",

@@ -280,7 +280,7 @@ export default function Dashboard() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "20px", marginBottom: "24px" }}>
             
             {/* Filter Tabs: All / Invoices / Quotations */}
-            <div style={{ display: "flex", gap: "8px", background: "rgba(255,255,255,0.03)", padding: "4px", borderRadius: "10px", border: "1px solid var(--border-color)" }}>
+            <div style={{ display: "flex", gap: "8px", background: "var(--input-bg)", padding: "4px", borderRadius: "10px", border: "1px solid var(--border-color)" }}>
               <button
                 onClick={() => setDocTab("all")}
                 style={{
@@ -296,7 +296,7 @@ export default function Dashboard() {
                 }}
               >
                 All Documents
-                <span style={{ fontSize: "11px", padding: "1px 6px", borderRadius: "10px", backgroundColor: docTab === "all" ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.08)" }}>
+                <span style={{ fontSize: "11px", padding: "1px 6px", borderRadius: "10px", backgroundColor: docTab === "all" ? "rgba(255,255,255,0.25)" : "rgba(128,128,128,0.15)", color: docTab === "all" ? "#fff" : "var(--text-primary)" }}>
                   {invoices.length}
                 </span>
               </button>
@@ -316,7 +316,7 @@ export default function Dashboard() {
                 }}
               >
                 Invoices
-                <span style={{ fontSize: "11px", padding: "1px 6px", borderRadius: "10px", backgroundColor: docTab === "invoice" ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.08)" }}>
+                <span style={{ fontSize: "11px", padding: "1px 6px", borderRadius: "10px", backgroundColor: docTab === "invoice" ? "rgba(255,255,255,0.25)" : "rgba(128,128,128,0.15)", color: docTab === "invoice" ? "#fff" : "var(--text-primary)" }}>
                   {invoiceCount}
                 </span>
               </button>
@@ -336,7 +336,7 @@ export default function Dashboard() {
                 }}
               >
                 Quotations
-                <span style={{ fontSize: "11px", padding: "1px 6px", borderRadius: "10px", backgroundColor: docTab === "quotation" ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.08)" }}>
+                <span style={{ fontSize: "11px", padding: "1px 6px", borderRadius: "10px", backgroundColor: docTab === "quotation" ? "rgba(255,255,255,0.25)" : "rgba(128,128,128,0.15)", color: docTab === "quotation" ? "#fff" : "var(--text-primary)" }}>
                   {quotationCount}
                 </span>
               </button>

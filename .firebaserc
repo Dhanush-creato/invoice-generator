@@ -1,6 +1,6 @@
 {
   "projects": {
-    "project": "invoice-genarator-1252c"
+    "default": "invoice-genarator-1252c"
   },
   "targets": {},
   "etags": {}

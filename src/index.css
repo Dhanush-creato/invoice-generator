@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,700;1,400&display=swap');
 
 :root {
+  color-scheme: dark;
   --bg-primary: #0a0f1d;
   --bg-secondary: #0d1527;
   --card-bg: rgba(18, 26, 47, 0.65);
@@ -21,6 +22,7 @@
 }
 
 .light-theme {
+  color-scheme: light;
   --bg-primary: #f5f7fb;
   --bg-secondary: #ffffff;
   --card-bg: rgba(255, 255, 255, 0.9);
@@ -35,6 +37,12 @@
   --border-color: rgba(0, 0, 0, 0.1);
   --input-bg: #f8fafc;
   --shadow-main: 0 8px 24px 0 rgba(148, 163, 184, 0.15);
+}
+
+.light-theme input,
+.light-theme select,
+.light-theme textarea {
+  color-scheme: light;
 }
 
 * {
